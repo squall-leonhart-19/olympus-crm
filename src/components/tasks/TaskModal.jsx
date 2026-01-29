@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react'
-import { X, Trash2, DollarSign, Calendar, User, Flag, FileText, ListTodo } from 'lucide-react'
+import { X, Trash2, DollarSign, Calendar, User, Flag, FileText, Clock } from 'lucide-react'
 import TaskComments from './TaskComments'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import './TaskModal.css'
 
 const PRIORITIES = [
-    { value: 'low', label: 'Low', color: '#6b7280', bg: 'rgba(107, 114, 128, 0.1)' },
-    { value: 'medium', label: 'Medium', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-    { value: 'high', label: 'High', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-    { value: 'urgent', label: 'Urgent', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+    { value: 'low', label: 'Low', color: '#6b7280', emoji: '🟢' },
+    { value: 'medium', label: 'Medium', color: '#3b82f6', emoji: '🔵' },
+    { value: 'high', label: 'High', color: '#f59e0b', emoji: '🟠' },
+    { value: 'urgent', label: 'Urgent', color: '#ef4444', emoji: '🔴' },
+]
+
+const QUICK_DATES = [
+    { label: 'Today', days: 0 },
+    { label: 'Tomorrow', days: 1 },
+    { label: 'This Week', days: 7 },
+    { label: 'Next Week', days: 14 },
 ]
 
 export default function TaskModal({ task, teamMembers = [], onSave, onDelete, onClose }) {
@@ -47,9 +54,7 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                 .in('stage', ['lead', 'booked', 'taken', 'proposal'])
                 .order('value', { ascending: false })
             if (data) setDeals(data)
-        } catch (e) {
-            // Table might not exist yet
-        }
+        } catch (e) { }
     }
 
     const loadCurrentUser = async () => {
@@ -74,48 +79,60 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
+    const setQuickDate = (days) => {
+        const date = new Date()
+        date.setDate(date.getDate() + days)
+        const dateStr = date.toISOString().split('T')[0]
+        handleChange('dueDate', dateStr)
+    }
+
+    const formatDateDisplay = (dateStr) => {
+        if (!dateStr) return 'No date set'
+        const date = new Date(dateStr)
+        const today = new Date()
+        const tomorrow = new Date()
+        tomorrow.setDate(today.getDate() + 1)
+
+        if (date.toDateString() === today.toDateString()) return '📅 Today'
+        if (date.toDateString() === tomorrow.toDateString()) return '📅 Tomorrow'
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    }
+
     const selectedDeal = deals.find(d => d.id === formData.dealId)
     const selectedPriority = PRIORITIES.find(p => p.value === formData.priority)
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content task-modal-premium" onClick={e => e.stopPropagation()}>
-                {/* Premium Header */}
+            <div className="task-modal" onClick={e => e.stopPropagation()}>
+                {/* Header */}
                 <div className="task-modal-header">
-                    <div className="task-modal-icon">
-                        <ListTodo size={24} />
+                    <div className="header-content">
+                        <h2>{task ? '✏️ Edit Task' : '✨ New Task'}</h2>
+                        <p>{task ? 'Update task details' : 'What needs to be done?'}</p>
                     </div>
-                    <div className="task-modal-title-area">
-                        <h2>{task ? 'Edit Task' : 'Create New Task'}</h2>
-                        <p>{task ? 'Update the task details below' : 'Add a new task to your board'}</p>
-                    </div>
-                    <button className="modal-close-btn" onClick={onClose}>
+                    <button className="close-btn" onClick={onClose}>
                         <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="task-form">
                     {/* Title */}
-                    <div className="form-group">
-                        <label>
-                            <FileText size={14} />
-                            Task Title
-                        </label>
+                    <div className="form-section">
                         <input
                             type="text"
-                            className="input input-large"
+                            className="title-input"
                             value={formData.title}
                             onChange={(e) => handleChange('title', e.target.value)}
-                            placeholder="What needs to be done?"
+                            placeholder="Task title..."
                             autoFocus
                         />
                     </div>
 
                     {/* Description */}
-                    <div className="form-group">
-                        <label>Description</label>
+                    <div className="form-section">
+                        <label><FileText size={14} /> Description</label>
                         <textarea
-                            className="input textarea"
+                            className="desc-input"
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             placeholder="Add more details..."
@@ -123,73 +140,88 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                         />
                     </div>
 
-                    {/* Priority Selector - Cards */}
-                    <div className="form-group">
-                        <label>
-                            <Flag size={14} />
-                            Priority
-                        </label>
-                        <div className="priority-selector">
+                    {/* Priority Selector */}
+                    <div className="form-section">
+                        <label><Flag size={14} /> Priority</label>
+                        <div className="priority-grid">
                             {PRIORITIES.map(p => (
-                                <div
+                                <button
                                     key={p.value}
-                                    className={`priority-option ${formData.priority === p.value ? 'selected' : ''}`}
-                                    style={{
-                                        '--priority-color': p.color,
-                                        '--priority-bg': p.bg
-                                    }}
+                                    type="button"
+                                    className={`priority-btn ${formData.priority === p.value ? 'active' : ''}`}
+                                    style={{ '--prio-color': p.color }}
                                     onClick={() => handleChange('priority', p.value)}
                                 >
-                                    <div className="priority-dot" style={{ background: p.color }} />
-                                    <span>{p.label}</span>
-                                </div>
+                                    <span className="prio-emoji">{p.emoji}</span>
+                                    <span className="prio-label">{p.label}</span>
+                                </button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="form-row">
-                        {/* Assignee */}
-                        <div className="form-group">
-                            <label>
-                                <User size={14} />
-                                Assignee
-                            </label>
-                            <select
-                                className="input"
-                                value={formData.assignee}
-                                onChange={(e) => handleChange('assignee', e.target.value)}
-                            >
-                                <option value="">Unassigned</option>
-                                {teamMembers.map(member => (
-                                    <option key={member} value={member}>{member}</option>
+                    {/* Date Selector */}
+                    <div className="form-section">
+                        <label><Calendar size={14} /> Due Date</label>
+                        <div className="date-section">
+                            <div className="quick-dates">
+                                {QUICK_DATES.map(d => (
+                                    <button
+                                        key={d.label}
+                                        type="button"
+                                        className="quick-date-btn"
+                                        onClick={() => setQuickDate(d.days)}
+                                    >
+                                        {d.label}
+                                    </button>
                                 ))}
-                            </select>
-                        </div>
-
-                        {/* Due Date */}
-                        <div className="form-group">
-                            <label>
-                                <Calendar size={14} />
-                                Due Date
-                            </label>
-                            <input
-                                type="date"
-                                className="input"
-                                value={formData.dueDate}
-                                onChange={(e) => handleChange('dueDate', e.target.value)}
-                            />
+                            </div>
+                            <div className="date-picker-row">
+                                <input
+                                    type="date"
+                                    className="date-input"
+                                    value={formData.dueDate}
+                                    onChange={(e) => handleChange('dueDate', e.target.value)}
+                                />
+                                <div className="date-display">
+                                    <Clock size={16} />
+                                    <span>{formatDateDisplay(formData.dueDate)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Deal Linking */}
+                    {/* Assignee */}
+                    <div className="form-section">
+                        <label><User size={14} /> Assign to</label>
+                        <div className="assignee-grid">
+                            <button
+                                type="button"
+                                className={`assignee-btn ${formData.assignee === '' ? 'active' : ''}`}
+                                onClick={() => handleChange('assignee', '')}
+                            >
+                                <span className="assignee-avatar">?</span>
+                                <span>Unassigned</span>
+                            </button>
+                            {teamMembers.map(member => (
+                                <button
+                                    key={member}
+                                    type="button"
+                                    className={`assignee-btn ${formData.assignee === member ? 'active' : ''}`}
+                                    onClick={() => handleChange('assignee', member)}
+                                >
+                                    <span className="assignee-avatar">{member.charAt(0)}</span>
+                                    <span>{member}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Deal Link */}
                     {deals.length > 0 && (
-                        <div className="form-group">
-                            <label>
-                                <DollarSign size={14} />
-                                Link to Deal
-                            </label>
+                        <div className="form-section">
+                            <label><DollarSign size={14} /> Link to Deal</label>
                             <select
-                                className="input"
+                                className="select-input"
                                 value={formData.dealId}
                                 onChange={(e) => handleChange('dealId', e.target.value)}
                             >
@@ -200,34 +232,30 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                                     </option>
                                 ))}
                             </select>
-                        </div>
-                    )}
-
-                    {selectedDeal && (
-                        <div className="deal-linked-banner">
-                            <DollarSign size={16} />
-                            <span>Linked to deal worth <strong>${selectedDeal.value?.toLocaleString()}</strong></span>
+                            {selectedDeal && (
+                                <div className="deal-badge">
+                                    💰 This task is linked to ${selectedDeal.value?.toLocaleString()} deal
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {/* Actions */}
-                    <div className="task-modal-actions">
+                    <div className="modal-actions">
                         {task && onDelete && (
-                            <button type="button" className="btn btn-ghost delete-btn" onClick={onDelete}>
+                            <button type="button" className="delete-btn" onClick={onDelete}>
                                 <Trash2 size={16} />
                                 Delete
                             </button>
                         )}
-                        <div className="action-buttons">
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>
+                        <div className="action-group">
+                            <button type="button" className="cancel-btn" onClick={onClose}>
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                className="btn btn-primary"
-                                style={{
-                                    background: selectedPriority?.color || 'var(--gold-primary)'
-                                }}
+                                className="submit-btn"
+                                style={{ background: selectedPriority?.color }}
                             >
                                 {task ? 'Save Changes' : 'Create Task'}
                             </button>
@@ -235,9 +263,11 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                     </div>
                 </form>
 
-                {/* Comments Section - only show for existing tasks */}
+                {/* Comments */}
                 {task && task.id && (
-                    <TaskComments taskId={task.id} currentUser={currentUser} />
+                    <div className="comments-section">
+                        <TaskComments taskId={task.id} currentUser={currentUser} />
+                    </div>
                 )}
             </div>
         </div>
