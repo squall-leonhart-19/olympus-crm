@@ -5,14 +5,120 @@
     margin-bottom: var(--spacing-lg);
 }
 
-.dashboard-header h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
+/* Today's Date Banner */
+.today-date-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
 }
 
-.date-range {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+.date-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.date-main svg {
+    color: var(--gold-primary);
+}
+
+.date-full {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.today-task-count {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.today-task-count .count {
+    background: var(--gold-primary);
+    color: #000;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+/* Today's Focus Section */
+.today-focus-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.today-focus-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+
+.today-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.today-task-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.today-task-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-gold);
+}
+
+.priority-indicator {
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+}
+
+.priority-indicator.priority-low {
+    background: var(--text-muted);
+}
+
+.priority-indicator.priority-medium {
+    background: var(--info);
+}
+
+.priority-indicator.priority-high {
+    background: var(--warning);
+}
+
+.priority-indicator.priority-urgent {
+    background: var(--danger);
+}
+
+.today-task-item .task-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.today-task-item .task-assignee {
+    font-size: 0.85rem;
+    color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.1);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
 }
 
 .metrics-grid {

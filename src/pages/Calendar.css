@@ -4,6 +4,71 @@
     gap: var(--spacing-lg);
 }
 
+/* Today Banner */
+.today-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius-md);
+}
+
+.today-date {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.today-date svg {
+    color: var(--gold-primary);
+}
+
+.today-label {
+    font-weight: 600;
+    color: var(--gold-primary);
+}
+
+.today-full {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.today-count {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.count-badge {
+    background: var(--gold-primary);
+    color: #000;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+/* Due Today Highlighting */
+.upcoming-task.due-today {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--border-gold);
+}
+
+.upcoming-task.due-today .upcoming-date {
+    color: var(--gold-primary);
+    font-weight: 600;
+}
+
+.no-upcoming {
+    padding: var(--spacing-lg);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 .calendar-header {
     display: flex;
     align-items: center;

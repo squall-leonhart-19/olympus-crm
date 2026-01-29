@@ -43,6 +43,9 @@ const MetricCard = ({ icon: Icon, label, value, trend, trendDirection, format = 
 
 export default function Dashboard() {
     const navigate = useNavigate()
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
     const [metrics, setMetrics] = useState({
         tasksCompleted: 0,
         onTimeRate: 0,
@@ -53,6 +56,7 @@ export default function Dashboard() {
         showRate: 0,
         pipelineValue: 0
     })
+    const [todayTasks, setTodayTasks] = useState([])
     const [alerts, setAlerts] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -103,6 +107,16 @@ export default function Dashboard() {
                 pipelineValue
             })
 
+            // Get today's tasks
+            const tasksForToday = tasks?.filter(t => t.due_date === todayStr && t.status !== 'done') || []
+            setTodayTasks(tasksForToday.map(t => ({
+                id: t.id,
+                title: t.title,
+                priority: t.priority,
+                assignee: t.assignee_name,
+                status: t.status
+            })))
+
             // Generate alerts
             const newAlerts = []
             if (overdueTasks > 0) {
@@ -130,9 +144,38 @@ export default function Dashboard() {
         <>
             <Header title="Dashboard" />
             <div className="page-content">
+                {/* Today's Date Banner */}
+                <div className="today-date-banner">
+                    <div className="date-main">
+                        <Clock size={22} />
+                        <span className="date-full">{today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    {todayTasks.length > 0 && (
+                        <div className="today-task-count">
+                            <span className="count">{todayTasks.length}</span> task{todayTasks.length > 1 ? 's' : ''} due today
+                        </div>
+                    )}
+                </div>
+
+                {/* Today's Focus Section */}
+                {todayTasks.length > 0 && (
+                    <div className="today-focus-section">
+                        <h3>📌 Today's Focus</h3>
+                        <div className="today-tasks-list">
+                            {todayTasks.map(task => (
+                                <div key={task.id} className="today-task-item" onClick={() => navigate('/tasks')}>
+                                    <div className={`priority-indicator priority-${task.priority}`} />
+                                    <span className="task-title">{task.title}</span>
+                                    {task.assignee && <span className="task-assignee">{task.assignee}</span>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="dashboard-header">
                     <h2>This Week at a Glance</h2>
-                    <span className="date-range">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span className="date-range">{today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </div>
 
                 {loading ? (
