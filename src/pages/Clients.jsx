@@ -1,21 +1,15 @@
+import { useState, useEffect } from 'react'
 import Header from '../components/layout/Header'
-import { Users, UserCheck, AlertTriangle, Star } from 'lucide-react'
+import { Users, UserCheck, AlertTriangle, Star, Plus, UserPlus } from 'lucide-react'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Clients.css'
-
-const DEMO_CLIENTS = [
-    { id: '1', name: 'Sarah Mitchell', email: 'sarah@example.com', status: 'active', healthScore: 85, ltv: 4997 },
-    { id: '2', name: 'Michael Johnson', email: 'michael@example.com', status: 'onboarding', healthScore: 70, ltv: 997 },
-    { id: '3', name: 'Emma Williams', email: 'emma@example.com', status: 'active', healthScore: 92, ltv: 2997 },
-    { id: '4', name: 'David Brown', email: 'david@example.com', status: 'at_risk', healthScore: 35, ltv: 2997 },
-    { id: '5', name: 'Jennifer Davis', email: 'jennifer@example.com', status: 'active', healthScore: 78, ltv: 1497 },
-]
 
 const getStatusBadge = (status) => {
     const styles = {
-        active: { bg: 'var(--success-bg)', color: 'var(--success)' },
-        onboarding: { bg: 'var(--info-bg)', color: 'var(--info)' },
-        at_risk: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
-        churned: { bg: 'var(--bg-elevated)', color: 'var(--text-muted)' },
+        active: { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Active' },
+        onboarding: { bg: 'var(--info-bg)', color: 'var(--info)', label: 'Onboarding' },
+        at_risk: { bg: 'var(--danger-bg)', color: 'var(--danger)', label: 'At Risk' },
+        churned: { bg: 'var(--bg-elevated)', color: 'var(--text-muted)', label: 'Churned' },
     }
     return styles[status] || styles.active
 }
@@ -27,15 +21,55 @@ const getHealthColor = (score) => {
 }
 
 export default function Clients() {
-    const totalClients = DEMO_CLIENTS.length
-    const activeClients = DEMO_CLIENTS.filter(c => c.status === 'active').length
-    const atRiskClients = DEMO_CLIENTS.filter(c => c.status === 'at_risk').length
-    const totalLTV = DEMO_CLIENTS.reduce((sum, c) => sum + c.ltv, 0)
+    const [clients, setClients] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        loadClients()
+    }, [])
+
+    const loadClients = async () => {
+        if (!isSupabaseConfigured) {
+            setLoading(false)
+            return
+        }
+
+        try {
+            const { data } = await supabase
+                .from('clients')
+                .select('*')
+                .order('created_at', { ascending: false })
+
+            if (data) {
+                setClients(data)
+            }
+        } catch (e) {
+            console.error('Error loading clients:', e)
+        }
+        setLoading(false)
+    }
+
+    const totalClients = clients.length
+    const activeClients = clients.filter(c => c.status === 'active').length
+    const atRiskClients = clients.filter(c => c.status === 'at_risk').length
+    const totalLTV = clients.reduce((sum, c) => sum + (c.ltv || 0), 0)
+
+    if (loading) {
+        return (
+            <>
+                <Header title="Clients" />
+                <div className="page-content">
+                    <div className="loading-state">Loading clients...</div>
+                </div>
+            </>
+        )
+    }
 
     return (
         <>
             <Header title="Clients" />
             <div className="page-content">
+                {/* Metrics */}
                 <div className="clients-metrics">
                     <div className="metric-card">
                         <Users size={24} className="metric-icon-inline" />
@@ -61,67 +95,79 @@ export default function Clients() {
                     <div className="metric-card">
                         <Star size={24} className="metric-icon-inline" />
                         <div>
-                            <div className="metric-value">${(totalLTV / 1000).toFixed(1)}K</div>
+                            <div className="metric-value">${totalLTV > 0 ? (totalLTV / 1000).toFixed(1) + 'K' : '0'}</div>
                             <div className="metric-label">Total LTV</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="clients-table-wrapper">
-                    <table className="clients-table">
-                        <thead>
-                            <tr>
-                                <th>Client</th>
-                                <th>Status</th>
-                                <th>Health Score</th>
-                                <th>LTV</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {DEMO_CLIENTS.map(client => (
-                                <tr key={client.id}>
-                                    <td>
-                                        <div className="client-info">
-                                            <div className="client-avatar">{client.name.charAt(0)}</div>
-                                            <div>
-                                                <div className="client-name">{client.name}</div>
-                                                <div className="client-email">{client.email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span
-                                            className="status-badge"
-                                            style={{
-                                                background: getStatusBadge(client.status).bg,
-                                                color: getStatusBadge(client.status).color
-                                            }}
-                                        >
-                                            {client.status.replace('_', ' ')}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="health-score">
-                                            <div className="health-bar">
-                                                <div
-                                                    className="health-fill"
-                                                    style={{
-                                                        width: `${client.healthScore}%`,
-                                                        background: getHealthColor(client.healthScore)
-                                                    }}
-                                                />
-                                            </div>
-                                            <span style={{ color: getHealthColor(client.healthScore) }}>
-                                                {client.healthScore}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="ltv-value">${client.ltv.toLocaleString()}</td>
+                {clients.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="empty-icon">👥</div>
+                        <h3>No clients yet</h3>
+                        <p>Add your first client to start tracking customer relationships</p>
+                        <button className="btn btn-primary">
+                            <UserPlus size={18} />
+                            Add Client
+                        </button>
+                    </div>
+                ) : (
+                    <div className="clients-table-wrapper">
+                        <table className="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Status</th>
+                                    <th>Health Score</th>
+                                    <th>LTV</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {clients.map(client => (
+                                    <tr key={client.id}>
+                                        <td>
+                                            <div className="client-info">
+                                                <div className="client-avatar">{client.name?.charAt(0) || '?'}</div>
+                                                <div>
+                                                    <div className="client-name">{client.name}</div>
+                                                    <div className="client-email">{client.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span
+                                                className="status-badge"
+                                                style={{
+                                                    background: getStatusBadge(client.status).bg,
+                                                    color: getStatusBadge(client.status).color
+                                                }}
+                                            >
+                                                {getStatusBadge(client.status).label}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="health-score">
+                                                <div className="health-bar">
+                                                    <div
+                                                        className="health-fill"
+                                                        style={{
+                                                            width: `${client.health_score || 0}%`,
+                                                            background: getHealthColor(client.health_score || 0)
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span style={{ color: getHealthColor(client.health_score || 0) }}>
+                                                    {client.health_score || 0}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="ltv-value">${(client.ltv || 0).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </>
     )
