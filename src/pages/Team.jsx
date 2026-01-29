@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Header from '../components/layout/Header'
-import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle } from 'lucide-react'
+import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle, Mail, Lock, User, Briefcase } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Team.css'
 
@@ -20,6 +20,9 @@ export default function Team() {
             setLoading(false)
             return
         }
+
+        // First, try to sync any auth users that aren't in team_members yet
+        await syncAuthUsers()
 
         // Load team members
         const { data: members } = await supabase
@@ -47,12 +50,41 @@ export default function Team() {
                     tasksCompleted: completed,
                     onTimeRate,
                     overdue,
-                    streak: 0 // Would need daily tracking for real streak
+                    streak: 0
                 }
             })
             setTeamMembers(membersWithStats)
         }
         setLoading(false)
+    }
+
+    // Sync auth users to team_members table
+    const syncAuthUsers = async () => {
+        try {
+            // Get current user (admin viewing page)
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (user) {
+                // Check if this user exists in team_members
+                const { data: existing } = await supabase
+                    .from('team_members')
+                    .select('id')
+                    .eq('email', user.email)
+                    .single()
+
+                if (!existing) {
+                    // Add current user to team_members
+                    await supabase.from('team_members').insert({
+                        email: user.email,
+                        name: user.user_metadata?.name || user.email.split('@')[0],
+                        role: 'admin'
+                    })
+                }
+            }
+        } catch (error) {
+            // Ignore sync errors
+            console.log('Sync error (non-critical):', error)
+        }
     }
 
     const handleInvite = async (e) => {
@@ -205,63 +237,93 @@ export default function Team() {
                 )}
             </div>
 
-            {/* Invite Modal */}
+            {/* Premium Invite Modal */}
             {showInviteModal && (
                 <div className="modal-overlay" onClick={() => setShowInviteModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2><UserPlus size={20} /> Invite Team Member</h2>
-                            <button className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>
+                    <div className="invite-modal" onClick={e => e.stopPropagation()}>
+                        <div className="invite-modal-header">
+                            <div className="invite-icon-wrapper">
+                                <UserPlus size={24} />
+                            </div>
+                            <h2>Invite Team Member</h2>
+                            <p>Add a new member to your Olympus team</p>
+                            <button className="modal-close-btn" onClick={() => setShowInviteModal(false)}>
                                 <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleInvite}>
+
+                        <form onSubmit={handleInvite} className="invite-form">
                             <div className="form-group">
-                                <label>Full Name</label>
+                                <label>
+                                    <User size={14} />
+                                    Full Name
+                                </label>
                                 <input
                                     type="text"
                                     className="input"
-                                    placeholder="John Doe"
+                                    placeholder="Alessio Tortoli"
                                     value={inviteForm.name}
                                     onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
                                     required
                                 />
                             </div>
+
                             <div className="form-group">
-                                <label>Email</label>
+                                <label>
+                                    <Mail size={14} />
+                                    Email Address
+                                </label>
                                 <input
                                     type="email"
                                     className="input"
-                                    placeholder="john@example.com"
+                                    placeholder="alessio@company.com"
                                     value={inviteForm.email}
                                     onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))}
                                     required
                                 />
                             </div>
+
                             <div className="form-group">
-                                <label>Password</label>
+                                <label>
+                                    <Lock size={14} />
+                                    Password
+                                </label>
                                 <input
                                     type="password"
                                     className="input"
-                                    placeholder="Strong password"
+                                    placeholder="Strong password (min 8 chars)"
                                     value={inviteForm.password}
                                     onChange={e => setInviteForm(f => ({ ...f, password: e.target.value }))}
                                     required
                                     minLength={8}
                                 />
                             </div>
+
                             <div className="form-group">
-                                <label>Role</label>
-                                <select
-                                    className="input"
-                                    value={inviteForm.role}
-                                    onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
-                                >
-                                    <option value="member">Team Member</option>
-                                    <option value="sales">Sales Rep</option>
-                                    <option value="closer">Closer</option>
-                                    <option value="admin">Admin</option>
-                                </select>
+                                <label>
+                                    <Briefcase size={14} />
+                                    Role
+                                </label>
+                                <div className="role-selector">
+                                    {[
+                                        { value: 'member', label: 'Team Member', desc: 'Can view and manage tasks' },
+                                        { value: 'sales', label: 'Sales Rep', desc: 'Full sales pipeline access' },
+                                        { value: 'closer', label: 'Closer', desc: 'Close deals and log KPIs' },
+                                        { value: 'admin', label: 'Admin', desc: 'Full system access' },
+                                    ].map(role => (
+                                        <div
+                                            key={role.value}
+                                            className={`role-option ${inviteForm.role === role.value ? 'selected' : ''}`}
+                                            onClick={() => setInviteForm(f => ({ ...f, role: role.value }))}
+                                        >
+                                            <div className="role-radio" />
+                                            <div className="role-info">
+                                                <span className="role-label">{role.label}</span>
+                                                <span className="role-desc">{role.desc}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {inviteStatus.error && (
@@ -274,16 +336,20 @@ export default function Team() {
                             {inviteStatus.success && (
                                 <div className="invite-success">
                                     <Check size={16} />
-                                    User created successfully!
+                                    User created successfully! They can now login.
                                 </div>
                             )}
 
-                            <div className="modal-actions">
+                            <div className="invite-actions">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowInviteModal(false)}>
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn btn-primary" disabled={inviteStatus.loading}>
-                                    {inviteStatus.loading ? 'Creating...' : 'Create User'}
+                                    {inviteStatus.loading ? (
+                                        <>Creating...</>
+                                    ) : (
+                                        <><UserPlus size={16} /> Create User</>
+                                    )}
                                 </button>
                             </div>
                         </form>
