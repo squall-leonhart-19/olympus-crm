@@ -136,3 +136,29 @@ select.input {
     background-position: right 12px center;
     padding-right: 36px;
 }
+
+/* Larger modal for tasks with comments */
+.task-modal-large {
+    max-width: 600px;
+}
+
+/* Deal linked banner */
+.deal-linked-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--success);
+    font-size: 0.875rem;
+}
+
+.deal-linked-banner svg {
+    flex-shrink: 0;
+}
+
+.deal-linked-banner strong {
+    color: var(--success);
+}

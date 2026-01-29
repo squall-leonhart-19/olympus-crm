@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, DollarSign } from 'lucide-react'
+import TaskComments from './TaskComments'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import './TaskModal.css'
 
-const TEAM_MEMBERS = ['Marco', 'Giulia', 'Alex', 'Zeus']
 const PRIORITIES = [
     { value: 'low', label: 'Low' },
     { value: 'medium', label: 'Medium' },
@@ -10,14 +11,17 @@ const PRIORITIES = [
     { value: 'urgent', label: 'Urgent' },
 ]
 
-export default function TaskModal({ task, onSave, onDelete, onClose }) {
+export default function TaskModal({ task, teamMembers = [], onSave, onDelete, onClose }) {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         priority: 'medium',
         assignee: '',
         dueDate: '',
+        dealId: '',
     })
+    const [deals, setDeals] = useState([])
+    const [currentUser, setCurrentUser] = useState('User')
 
     useEffect(() => {
         if (task) {
@@ -27,9 +31,32 @@ export default function TaskModal({ task, onSave, onDelete, onClose }) {
                 priority: task.priority || 'medium',
                 assignee: task.assignee || '',
                 dueDate: task.dueDate || '',
+                dealId: task.dealId || '',
             })
         }
+        loadDeals()
+        loadCurrentUser()
     }, [task])
+
+    const loadDeals = async () => {
+        if (!isSupabaseConfigured) return
+        const { data } = await supabase
+            .from('deals')
+            .select('id, title, value, stage')
+            .in('stage', ['lead', 'booked', 'taken', 'proposal'])
+            .order('value', { ascending: false })
+        if (data) setDeals(data)
+    }
+
+    const loadCurrentUser = async () => {
+        if (!isSupabaseConfigured) return
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.user_metadata?.name) {
+            setCurrentUser(user.user_metadata.name)
+        } else if (user?.email) {
+            setCurrentUser(user.email.split('@')[0])
+        }
+    }
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -41,9 +68,11 @@ export default function TaskModal({ task, onSave, onDelete, onClose }) {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
+    const selectedDeal = deals.find(d => d.id === formData.dealId)
+
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-content task-modal-large" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2>{task ? 'Edit Task' : 'New Task'}</h2>
                     <button className="modal-close" onClick={onClose}>
@@ -84,7 +113,7 @@ export default function TaskModal({ task, onSave, onDelete, onClose }) {
                                 onChange={(e) => handleChange('assignee', e.target.value)}
                             >
                                 <option value="">Unassigned</option>
-                                {TEAM_MEMBERS.map(member => (
+                                {teamMembers.map(member => (
                                     <option key={member} value={member}>{member}</option>
                                 ))}
                             </select>
@@ -104,15 +133,43 @@ export default function TaskModal({ task, onSave, onDelete, onClose }) {
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Due Date</label>
-                        <input
-                            type="date"
-                            className="input"
-                            value={formData.dueDate}
-                            onChange={(e) => handleChange('dueDate', e.target.value)}
-                        />
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Due Date</label>
+                            <input
+                                type="date"
+                                className="input"
+                                value={formData.dueDate}
+                                onChange={(e) => handleChange('dueDate', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>
+                                <DollarSign size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                                Link to Deal
+                            </label>
+                            <select
+                                className="input"
+                                value={formData.dealId}
+                                onChange={(e) => handleChange('dealId', e.target.value)}
+                            >
+                                <option value="">No deal linked</option>
+                                {deals.map(deal => (
+                                    <option key={deal.id} value={deal.id}>
+                                        {deal.title} (${deal.value?.toLocaleString()})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+
+                    {selectedDeal && (
+                        <div className="deal-linked-banner">
+                            <DollarSign size={16} />
+                            <span>Linked to deal worth <strong>${selectedDeal.value?.toLocaleString()}</strong></span>
+                        </div>
+                    )}
 
                     <div className="modal-actions">
                         {task && onDelete && (
@@ -131,6 +188,11 @@ export default function TaskModal({ task, onSave, onDelete, onClose }) {
                         </div>
                     </div>
                 </form>
+
+                {/* Comments Section - only show for existing tasks */}
+                {task && task.id && (
+                    <TaskComments taskId={task.id} currentUser={currentUser} />
+                )}
             </div>
         </div>
     )

@@ -28,11 +28,25 @@ CREATE TABLE tasks (
   priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
   assignee_id UUID REFERENCES team_members(id),
   assignee_name TEXT,
+  deal_id UUID, -- Link to deals table (FK added after deals table creation)
   due_date DATE,
   completed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- =====================
+-- TASK COMMENTS TABLE
+-- =====================
+CREATE TABLE task_comments (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+  user_name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_task_comments_task ON task_comments(task_id);
 
 -- =====================
 -- DEALS (PIPELINE) TABLE
