@@ -311,6 +311,18 @@
     color: #000;
 }
 
+.assignee-avatar-img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(212, 175, 55, 0.3);
+}
+
+.assignee-btn.active .assignee-avatar-img {
+    border-color: var(--gold-primary);
+}
+
 /* Select Input */
 .select-input {
     width: 100%;

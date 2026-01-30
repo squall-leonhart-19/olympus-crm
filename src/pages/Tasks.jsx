@@ -143,9 +143,9 @@ export default function Tasks() {
     const loadTeamMembers = async () => {
         if (!isSupabaseConfigured) return
         try {
-            const { data } = await supabase.from('team_members').select('name')
+            const { data } = await supabase.from('team_members').select('id, name, nickname, avatar_url')
             if (data) {
-                setTeamMembers(data.map(m => m.name))
+                setTeamMembers(data)
             }
         } catch (e) { }
     }
@@ -318,6 +318,12 @@ export default function Tasks() {
         return dueDate.getTime() === todayStart.getTime()
     })
 
+    // Helper to get member data by name
+    const getMemberByName = (name) => {
+        if (!name) return null
+        return teamMembers.find(m => m.name === name) || null
+    }
+
     if (loading) {
         return (
             <>
@@ -417,7 +423,7 @@ export default function Tasks() {
                             >
                                 <option value="">All</option>
                                 {teamMembers.map(m => (
-                                    <option key={m} value={m}>{m}</option>
+                                    <option key={m.name} value={m.name}>{m.nickname || m.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -547,12 +553,20 @@ export default function Tasks() {
                                                                             {formatDate(task.dueDate)}
                                                                         </span>
                                                                     )}
-                                                                    {task.assignee && (
-                                                                        <span className="task-assignee-chip">
-                                                                            <span className="assignee-avatar-mini">{task.assignee.charAt(0)}</span>
-                                                                            {task.assignee}
-                                                                        </span>
-                                                                    )}
+                                                                    {task.assignee && (() => {
+                                                                        const member = getMemberByName(task.assignee)
+                                                                        const displayName = member?.nickname || task.assignee
+                                                                        return (
+                                                                            <span className="task-assignee-chip">
+                                                                                {member?.avatar_url ? (
+                                                                                    <img src={member.avatar_url} alt={displayName} className="assignee-avatar-img-mini" />
+                                                                                ) : (
+                                                                                    <span className="assignee-avatar-mini">{task.assignee.charAt(0)}</span>
+                                                                                )}
+                                                                                {displayName}
+                                                                            </span>
+                                                                        )
+                                                                    })()}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -617,12 +631,20 @@ export default function Tasks() {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    {task.assignee && (
-                                                        <span className="task-assignee-chip">
-                                                            <span className="assignee-avatar-mini">{task.assignee.charAt(0)}</span>
-                                                            {task.assignee}
-                                                        </span>
-                                                    )}
+                                                    {task.assignee && (() => {
+                                                        const member = getMemberByName(task.assignee)
+                                                        const displayName = member?.nickname || task.assignee
+                                                        return (
+                                                            <span className="task-assignee-chip">
+                                                                {member?.avatar_url ? (
+                                                                    <img src={member.avatar_url} alt={displayName} className="assignee-avatar-img-mini" />
+                                                                ) : (
+                                                                    <span className="assignee-avatar-mini">{task.assignee.charAt(0)}</span>
+                                                                )}
+                                                                {displayName}
+                                                            </span>
+                                                        )
+                                                    })()}
                                                 </td>
                                                 <td>
                                                     {task.dueDate && (

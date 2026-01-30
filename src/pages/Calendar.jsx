@@ -69,8 +69,8 @@ export default function CalendarPage() {
 
     const loadTeamMembers = async () => {
         if (!isSupabaseConfigured) return
-        const { data } = await supabase.from('team_members').select('name')
-        if (data) setTeamMembers(data.map(m => m.name))
+        const { data } = await supabase.from('team_members').select('id, name, nickname, avatar_url')
+        if (data) setTeamMembers(data)
     }
 
     const prevMonth = () => {

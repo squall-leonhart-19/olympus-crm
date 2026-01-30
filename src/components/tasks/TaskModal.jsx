@@ -202,17 +202,27 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                                 <span className="assignee-avatar">?</span>
                                 <span>Unassigned</span>
                             </button>
-                            {teamMembers.map(member => (
-                                <button
-                                    key={member}
-                                    type="button"
-                                    className={`assignee-btn ${formData.assignee === member ? 'active' : ''}`}
-                                    onClick={() => handleChange('assignee', member)}
-                                >
-                                    <span className="assignee-avatar">{member.charAt(0)}</span>
-                                    <span>{member}</span>
-                                </button>
-                            ))}
+                            {teamMembers.map(member => {
+                                const memberName = typeof member === 'string' ? member : member.name
+                                const displayName = typeof member === 'string' ? member : (member.nickname || member.name)
+                                const avatarUrl = typeof member === 'string' ? null : member.avatar_url
+
+                                return (
+                                    <button
+                                        key={memberName}
+                                        type="button"
+                                        className={`assignee-btn ${formData.assignee === memberName ? 'active' : ''}`}
+                                        onClick={() => handleChange('assignee', memberName)}
+                                    >
+                                        {avatarUrl ? (
+                                            <img src={avatarUrl} alt={displayName} className="assignee-avatar-img" />
+                                        ) : (
+                                            <span className="assignee-avatar">{memberName.charAt(0)}</span>
+                                        )}
+                                        <span>{displayName}</span>
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
 
