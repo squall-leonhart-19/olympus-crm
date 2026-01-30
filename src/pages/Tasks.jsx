@@ -75,6 +75,7 @@ export default function Tasks() {
     const [hoveredTask, setHoveredTask] = useState(null)
     const [currentUserName, setCurrentUserName] = useState('')
     const [currentUserRole, setCurrentUserRole] = useState('member')
+    const [selectedTasks, setSelectedTasks] = useState([])
     const [filters, setFilters] = useState({
         assignee: '',
         priority: '',
@@ -334,6 +335,57 @@ export default function Tasks() {
         setSearchQuery('')
     }
 
+    // Bulk action handlers
+    const toggleTaskSelection = (taskId) => {
+        setSelectedTasks(prev =>
+            prev.includes(taskId)
+                ? prev.filter(id => id !== taskId)
+                : [...prev, taskId]
+        )
+    }
+
+    const selectAllTasks = () => {
+        if (selectedTasks.length === filteredTasks.length) {
+            setSelectedTasks([])
+        } else {
+            setSelectedTasks(filteredTasks.map(t => t.id))
+        }
+    }
+
+    const clearSelection = () => {
+        setSelectedTasks([])
+    }
+
+    const bulkUpdateStatus = async (newStatus) => {
+        setTasks(prev => prev.map(t =>
+            selectedTasks.includes(t.id) ? { ...t, status: newStatus } : t
+        ))
+
+        if (isSupabaseConfigured) {
+            await supabase
+                .from('tasks')
+                .update({ status: newStatus })
+                .in('id', selectedTasks)
+        }
+
+        setSelectedTasks([])
+    }
+
+    const bulkDelete = async () => {
+        if (!confirm(`Delete ${selectedTasks.length} tasks?`)) return
+
+        setTasks(prev => prev.filter(t => !selectedTasks.includes(t.id)))
+
+        if (isSupabaseConfigured) {
+            await supabase
+                .from('tasks')
+                .delete()
+                .in('id', selectedTasks)
+        }
+
+        setSelectedTasks([])
+    }
+
     const hasActiveFilters = filters.assignee || filters.priority || filters.status || searchQuery
 
     // Filter tasks including search
@@ -563,7 +615,7 @@ export default function Tasks() {
                                                     columnTasks.map(task => (
                                                         <div
                                                             key={task.id}
-                                                            className={`task-card ${getDueDateClass(task.dueDate, task.status)} ${hoveredTask === task.id ? 'hovered' : ''}`}
+                                                            className={`task-card ${getDueDateClass(task.dueDate, task.status)} ${hoveredTask === task.id ? 'hovered' : ''} ${selectedTasks.includes(task.id) ? 'selected' : ''}`}
                                                             draggable
                                                             onDragStart={(e) => handleDragStart(e, task)}
                                                             onDragEnd={handleDragEnd}
@@ -575,6 +627,14 @@ export default function Tasks() {
                                                                 className="task-priority-bar"
                                                                 style={{ background: PRIORITY_COLORS[task.priority] }}
                                                             />
+
+                                                            {/* Selection Checkbox */}
+                                                            <div
+                                                                className={`task-select-box ${selectedTasks.includes(task.id) ? 'selected' : ''}`}
+                                                                onClick={(e) => { e.stopPropagation(); toggleTaskSelection(task.id); }}
+                                                            >
+                                                                {selectedTasks.includes(task.id) ? '✓' : ''}
+                                                            </div>
 
                                                             {/* Quick Actions */}
                                                             <div className="task-quick-actions">
@@ -736,6 +796,24 @@ export default function Tasks() {
                     />
                 )
             })()}
+
+            {/* Floating Bulk Actions Bar */}
+            {selectedTasks.length > 0 && (
+                <div className="bulk-actions-bar">
+                    <span className="bulk-count">{selectedTasks.length} selected</span>
+                    <div className="bulk-divider" />
+                    <button className="bulk-btn" onClick={() => bulkUpdateStatus('todo')}>To Do</button>
+                    <button className="bulk-btn" onClick={() => bulkUpdateStatus('in_progress')}>In Progress</button>
+                    <button className="bulk-btn" onClick={() => bulkUpdateStatus('done')}>Done</button>
+                    <div className="bulk-divider" />
+                    <button className="bulk-btn danger" onClick={bulkDelete}>
+                        <Trash2 size={14} /> Delete
+                    </button>
+                    <button className="bulk-close" onClick={clearSelection}>
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
         </>
     )
 }
