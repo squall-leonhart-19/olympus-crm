@@ -73,6 +73,8 @@ export default function Tasks() {
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [hoveredTask, setHoveredTask] = useState(null)
+    const [currentUserName, setCurrentUserName] = useState('')
+    const [currentUserRole, setCurrentUserRole] = useState('member')
     const [filters, setFilters] = useState({
         assignee: '',
         priority: '',
@@ -108,6 +110,7 @@ export default function Tasks() {
     useEffect(() => {
         loadTasks()
         loadTeamMembers()
+        loadCurrentUser()
     }, [])
 
     const loadTasks = async () => {
@@ -143,9 +146,31 @@ export default function Tasks() {
     const loadTeamMembers = async () => {
         if (!isSupabaseConfigured) return
         try {
-            const { data } = await supabase.from('team_members').select('id, name, nickname, avatar_url')
+            const { data } = await supabase.from('team_members').select('id, name, nickname, avatar_url, role')
             if (data) {
                 setTeamMembers(data)
+            }
+        } catch (e) { }
+    }
+
+    const loadCurrentUser = async () => {
+        if (!isSupabaseConfigured) return
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+                setCurrentUserName(userName)
+
+                // Get user's role from team_members
+                const { data: member } = await supabase
+                    .from('team_members')
+                    .select('role')
+                    .eq('email', user.email)
+                    .single()
+
+                if (member?.role) {
+                    setCurrentUserRole(member.role.toLowerCase())
+                }
             }
         } catch (e) { }
     }
@@ -664,15 +689,25 @@ export default function Tasks() {
                 )}
             </div>
 
-            {isModalOpen && (
-                <TaskModal
-                    task={editingTask}
-                    teamMembers={teamMembers}
-                    onSave={handleSaveTask}
-                    onDelete={editingTask?.id ? () => handleDeleteTask(editingTask.id) : null}
-                    onClose={() => { setIsModalOpen(false); setEditingTask(null) }}
-                />
-            )}
+            {isModalOpen && (() => {
+                const isAdmin = currentUserRole === 'admin'
+                const isTaskOwner = editingTask?.assignee === currentUserName
+                const canEdit = !editingTask || isAdmin || isTaskOwner
+                const canDelete = isAdmin
+
+                return (
+                    <TaskModal
+                        task={editingTask}
+                        teamMembers={teamMembers}
+                        onSave={handleSaveTask}
+                        onDelete={editingTask?.id ? () => handleDeleteTask(editingTask.id) : null}
+                        onClose={() => { setIsModalOpen(false); setEditingTask(null) }}
+                        canEdit={canEdit}
+                        canDelete={canDelete}
+                        currentUserName={currentUserName}
+                    />
+                )
+            })()}
         </>
     )
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Trash2, DollarSign, Calendar, User, Flag, FileText, Clock } from 'lucide-react'
+import { X, Trash2, DollarSign, Calendar, User, Flag, FileText, Clock, Edit2, Eye } from 'lucide-react'
 import TaskComments from './TaskComments'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import './TaskModal.css'
@@ -18,7 +18,17 @@ const QUICK_DATES = [
     { label: 'Next Week', days: 14 },
 ]
 
-export default function TaskModal({ task, teamMembers = [], onSave, onDelete, onClose }) {
+export default function TaskModal({
+    task,
+    teamMembers = [],
+    onSave,
+    onDelete,
+    onClose,
+    canEdit = true,
+    canDelete = false,
+    currentUserName = ''
+}) {
+    const [mode, setMode] = useState(task ? 'view' : 'edit') // view or edit
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -40,6 +50,9 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                 dueDate: task.dueDate || '',
                 dealId: task.dealId || '',
             })
+            setMode('view')
+        } else {
+            setMode('edit')
         }
         loadDeals()
         loadCurrentUser()
@@ -101,6 +114,120 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
     const selectedDeal = deals.find(d => d.id === formData.dealId)
     const selectedPriority = PRIORITIES.find(p => p.value === formData.priority)
 
+    // Find assignee member data
+    const assigneeMember = teamMembers.find(m =>
+        (typeof m === 'string' ? m : m.name) === formData.assignee
+    )
+    const assigneeDisplayName = assigneeMember?.nickname || assigneeMember?.name || formData.assignee
+    const assigneeAvatar = typeof assigneeMember === 'object' ? assigneeMember.avatar_url : null
+
+    // VIEW MODE
+    if (mode === 'view' && task) {
+        return (
+            <div className="modal-overlay" onClick={onClose}>
+                <div className="task-modal task-view-mode" onClick={e => e.stopPropagation()}>
+                    {/* Header */}
+                    <div className="task-modal-header">
+                        <div className="header-content">
+                            <h2>{formData.title}</h2>
+                            <div className="task-view-badges">
+                                <span
+                                    className="priority-badge-view"
+                                    style={{ background: selectedPriority?.color }}
+                                >
+                                    {selectedPriority?.emoji} {selectedPriority?.label}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="header-actions">
+                            {canEdit && (
+                                <button
+                                    className="edit-mode-btn"
+                                    onClick={() => setMode('edit')}
+                                    title="Edit Task"
+                                >
+                                    <Edit2 size={18} />
+                                    Edit
+                                </button>
+                            )}
+                            <button className="close-btn" onClick={onClose}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Task Details */}
+                    <div className="task-view-content">
+                        {/* Description */}
+                        {formData.description && (
+                            <div className="task-detail-section">
+                                <div className="detail-label"><FileText size={14} /> Description</div>
+                                <p className="detail-value description-text">{formData.description}</p>
+                            </div>
+                        )}
+
+                        {/* Meta Grid */}
+                        <div className="task-meta-grid">
+                            {/* Assignee */}
+                            <div className="task-detail-card">
+                                <div className="detail-label"><User size={14} /> Assigned to</div>
+                                <div className="detail-value assignee-display">
+                                    {formData.assignee ? (
+                                        <>
+                                            {assigneeAvatar ? (
+                                                <img src={assigneeAvatar} alt="" className="view-avatar-img" />
+                                            ) : (
+                                                <span className="view-avatar">{formData.assignee.charAt(0)}</span>
+                                            )}
+                                            <span>{assigneeDisplayName}</span>
+                                        </>
+                                    ) : (
+                                        <span className="unassigned">Unassigned</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Due Date */}
+                            <div className="task-detail-card">
+                                <div className="detail-label"><Calendar size={14} /> Due Date</div>
+                                <div className="detail-value">{formatDateDisplay(formData.dueDate)}</div>
+                            </div>
+
+                            {/* Linked Deal */}
+                            {selectedDeal && (
+                                <div className="task-detail-card deal-card">
+                                    <div className="detail-label"><DollarSign size={14} /> Linked Deal</div>
+                                    <div className="detail-value">
+                                        {selectedDeal.title}
+                                        <span className="deal-value">${selectedDeal.value?.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="view-actions">
+                            {canDelete && onDelete && (
+                                <button className="delete-btn" onClick={onDelete}>
+                                    <Trash2 size={16} />
+                                    Delete Task
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Comments */}
+                    {task && task.id && (
+                        <div className="comments-section">
+                            <TaskComments taskId={task.id} currentUser={currentUser} />
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
+    // EDIT MODE
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="task-modal" onClick={e => e.stopPropagation()}>
@@ -110,9 +237,20 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                         <h2>{task ? '✏️ Edit Task' : '✨ New Task'}</h2>
                         <p>{task ? 'Update task details' : 'What needs to be done?'}</p>
                     </div>
-                    <button className="close-btn" onClick={onClose}>
-                        <X size={20} />
-                    </button>
+                    <div className="header-actions">
+                        {task && (
+                            <button
+                                className="view-mode-btn"
+                                onClick={() => setMode('view')}
+                                title="View Task"
+                            >
+                                <Eye size={18} />
+                            </button>
+                        )}
+                        <button className="close-btn" onClick={onClose}>
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="task-form">
@@ -252,14 +390,14 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
 
                     {/* Actions */}
                     <div className="modal-actions">
-                        {task && onDelete && (
+                        {task && canDelete && onDelete && (
                             <button type="button" className="delete-btn" onClick={onDelete}>
                                 <Trash2 size={16} />
                                 Delete
                             </button>
                         )}
                         <div className="action-group">
-                            <button type="button" className="cancel-btn" onClick={onClose}>
+                            <button type="button" className="cancel-btn" onClick={task ? () => setMode('view') : onClose}>
                                 Cancel
                             </button>
                             <button
@@ -273,7 +411,7 @@ export default function TaskModal({ task, teamMembers = [], onSave, onDelete, on
                     </div>
                 </form>
 
-                {/* Comments */}
+                {/* Comments in edit mode too */}
                 {task && task.id && (
                     <div className="comments-section">
                         <TaskComments taskId={task.id} currentUser={currentUser} />
