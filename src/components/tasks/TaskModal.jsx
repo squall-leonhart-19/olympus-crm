@@ -55,12 +55,16 @@ export default function TaskModal({
         dueDate: '',
         dueTime: '',
         dealId: '',
+        projectId: '',
+        sectionId: '',
         subtasks: [],
         labels: [],
         recurrence: null,
         blockedBy: [],
     })
     const [deals, setDeals] = useState([])
+    const [projects, setProjects] = useState([])
+    const [sections, setSections] = useState([])
     const [currentUser, setCurrentUser] = useState('User')
     const [newSubtask, setNewSubtask] = useState('')
 
@@ -87,6 +91,7 @@ export default function TaskModal({
             setMode('edit')
         }
         loadDeals()
+        loadProjects()
         loadCurrentUser()
     }, [task])
 
@@ -99,6 +104,32 @@ export default function TaskModal({
                 .in('stage', ['lead', 'booked', 'taken', 'proposal'])
                 .order('value', { ascending: false })
             if (data) setDeals(data)
+        } catch (e) { }
+    }
+
+    const loadProjects = async () => {
+        if (!isSupabaseConfigured) return
+        try {
+            const { data } = await supabase
+                .from('projects')
+                .select('id, name, icon, color')
+                .order('created_at', { ascending: true })
+            if (data) setProjects(data)
+        } catch (e) { }
+    }
+
+    const loadSections = async (projectId) => {
+        if (!isSupabaseConfigured || !projectId) {
+            setSections([])
+            return
+        }
+        try {
+            const { data } = await supabase
+                .from('project_sections')
+                .select('id, name, color')
+                .eq('project_id', projectId)
+                .order('sort_order', { ascending: true })
+            if (data) setSections(data)
         } catch (e) { }
     }
 
@@ -402,6 +433,42 @@ export default function TaskModal({
                         />
                     </div>
 
+                    {/* Project & Section */}
+                    {projects.length > 0 && (
+                        <div className="form-section project-section">
+                            <label><span className="project-icon">📁</span> Project</label>
+                            <div className="project-selectors">
+                                <select
+                                    className="select-input"
+                                    value={formData.projectId || ''}
+                                    onChange={(e) => {
+                                        handleChange('projectId', e.target.value)
+                                        handleChange('sectionId', '')
+                                        if (e.target.value) loadSections(e.target.value)
+                                        else setSections([])
+                                    }}
+                                >
+                                    <option value="">No project</option>
+                                    {projects.map(p => (
+                                        <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                                    ))}
+                                </select>
+                                {sections.length > 0 && (
+                                    <select
+                                        className="select-input"
+                                        value={formData.sectionId || ''}
+                                        onChange={(e) => handleChange('sectionId', e.target.value)}
+                                    >
+                                        <option value="">No section</option>
+                                        {sections.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Two Column Layout */}
                     <div className="form-columns">
                         <div className="form-column">
@@ -598,8 +665,7 @@ export default function TaskModal({
                             </button>
                             <button
                                 type="submit"
-                                className="submit-btn"
-                                style={{ background: selectedPriority?.color }}
+                                className="submit-btn gold"
                             >
                                 {task ? 'Save Changes' : 'Create Task'}
                             </button>

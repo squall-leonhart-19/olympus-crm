@@ -109,6 +109,28 @@
     color: var(--gold-primary);
 }
 
+/* Project Section */
+.project-section {
+    background: rgba(212, 175, 55, 0.05);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-gold);
+}
+
+.project-icon {
+    font-size: 1rem;
+    margin-right: 4px;
+}
+
+.project-selectors {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.project-selectors .select-input {
+    flex: 1;
+}
+
 /* Title Input */
 .title-input {
     width: 100%;
@@ -445,6 +467,16 @@
 .submit-btn:hover {
     opacity: 0.9;
     transform: translateY(-1px);
+}
+
+.submit-btn.gold {
+    background: var(--gold-gradient);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.submit-btn.gold:hover {
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+    transform: translateY(-2px);
 }
 
 /* Comments Section */
