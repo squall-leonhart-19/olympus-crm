@@ -14,11 +14,18 @@ export const supabase = isSupabaseConfigured
 // Auth helpers - these return early if Supabase isn't configured
 export const signUp = async (email, password, name) => {
   if (!supabase) return { data: null, error: { message: 'Supabase not configured' } }
+
+  // Get the current origin for redirect (works for both localhost and production)
+  const redirectUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/login`
+    : undefined
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name }
+      data: { name },
+      emailRedirectTo: redirectUrl
     }
   })
   return { data, error }

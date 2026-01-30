@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Header from '../components/layout/Header'
-import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle, Mail, Lock, User, Briefcase } from 'lucide-react'
+import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle, Mail, Lock, User, Briefcase, Edit2, Trash2, Save } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Team.css'
 
@@ -10,6 +10,17 @@ export default function Team() {
     const [showInviteModal, setShowInviteModal] = useState(false)
     const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'member', password: '' })
     const [inviteStatus, setInviteStatus] = useState({ loading: false, error: null, success: false })
+
+    // Edit user state
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [editingMember, setEditingMember] = useState(null)
+    const [editForm, setEditForm] = useState({ name: '', email: '', role: '' })
+    const [editStatus, setEditStatus] = useState({ loading: false, error: null, success: false })
+
+    // Delete confirmation state
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deletingMember, setDeletingMember] = useState(null)
+    const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null })
 
     useEffect(() => {
         loadTeamMembers()
@@ -93,11 +104,13 @@ export default function Team() {
 
         try {
             // Create user in Supabase Auth
+            const redirectUrl = `${window.location.origin}/login`
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: inviteForm.email,
                 password: inviteForm.password,
                 options: {
-                    data: { name: inviteForm.name }
+                    data: { name: inviteForm.name },
+                    emailRedirectTo: redirectUrl
                 }
             })
 
@@ -125,6 +138,82 @@ export default function Team() {
 
         } catch (error) {
             setInviteStatus({ loading: false, error: error.message, success: false })
+        }
+    }
+
+    // Open edit modal for a member
+    const openEditModal = (member) => {
+        setEditingMember(member)
+        setEditForm({
+            name: member.name || '',
+            email: member.email || '',
+            role: member.role || 'member'
+        })
+        setEditStatus({ loading: false, error: null, success: false })
+        setShowEditModal(true)
+    }
+
+    // Handle updating user
+    const handleEditUser = async (e) => {
+        e.preventDefault()
+        setEditStatus({ loading: true, error: null, success: false })
+
+        try {
+            // Update team_members table
+            const { error: dbError } = await supabase
+                .from('team_members')
+                .update({
+                    name: editForm.name,
+                    email: editForm.email,
+                    role: editForm.role
+                })
+                .eq('id', editingMember.id)
+
+            if (dbError) throw dbError
+
+            setEditStatus({ loading: false, error: null, success: true })
+
+            setTimeout(() => {
+                loadTeamMembers()
+                setShowEditModal(false)
+                setEditingMember(null)
+                setEditStatus({ loading: false, error: null, success: false })
+            }, 1000)
+
+        } catch (error) {
+            setEditStatus({ loading: false, error: error.message, success: false })
+        }
+    }
+
+    // Open delete confirmation
+    const openDeleteConfirm = (member) => {
+        setDeletingMember(member)
+        setDeleteStatus({ loading: false, error: null })
+        setShowDeleteConfirm(true)
+    }
+
+    // Handle deleting user
+    const handleDeleteUser = async () => {
+        setDeleteStatus({ loading: true, error: null })
+
+        try {
+            // Delete from team_members table
+            const { error: dbError } = await supabase
+                .from('team_members')
+                .delete()
+                .eq('id', deletingMember.id)
+
+            if (dbError) throw dbError
+
+            // Note: Deleting from Supabase Auth requires admin privileges
+            // For now, we just remove from team_members table
+
+            loadTeamMembers()
+            setShowDeleteConfirm(false)
+            setDeletingMember(null)
+
+        } catch (error) {
+            setDeleteStatus({ loading: false, error: error.message })
         }
     }
 
@@ -229,6 +318,22 @@ export default function Team() {
                                                 ⚠️ {member.overdue} overdue task{member.overdue > 1 ? 's' : ''}
                                             </div>
                                         )}
+                                        <div className="perf-actions">
+                                            <button
+                                                className="btn btn-icon btn-ghost"
+                                                onClick={() => openEditModal(member)}
+                                                title="Edit member"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                className="btn btn-icon btn-ghost btn-danger"
+                                                onClick={() => openDeleteConfirm(member)}
+                                                title="Remove member"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -353,6 +458,149 @@ export default function Team() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Member Modal */}
+            {showEditModal && editingMember && (
+                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                    <div className="invite-modal" onClick={e => e.stopPropagation()}>
+                        <div className="invite-modal-header">
+                            <div className="invite-icon-wrapper">
+                                <Edit2 size={24} />
+                            </div>
+                            <h2>Edit Team Member</h2>
+                            <p>Update {editingMember.name}'s information</p>
+                            <button className="modal-close-btn" onClick={() => setShowEditModal(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditUser} className="invite-form">
+                            <div className="form-group">
+                                <label>
+                                    <User size={14} />
+                                    Full Name
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="Full Name"
+                                    value={editForm.name}
+                                    onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    <Mail size={14} />
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    className="input"
+                                    placeholder="email@company.com"
+                                    value={editForm.email}
+                                    onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    <Briefcase size={14} />
+                                    Role
+                                </label>
+                                <div className="role-selector">
+                                    {[
+                                        { value: 'member', label: 'Team Member', desc: 'Can view and manage tasks' },
+                                        { value: 'sales', label: 'Sales Rep', desc: 'Full sales pipeline access' },
+                                        { value: 'closer', label: 'Closer', desc: 'Close deals and log KPIs' },
+                                        { value: 'admin', label: 'Admin', desc: 'Full system access' },
+                                    ].map(role => (
+                                        <div
+                                            key={role.value}
+                                            className={`role-option ${editForm.role === role.value ? 'selected' : ''}`}
+                                            onClick={() => setEditForm(f => ({ ...f, role: role.value }))}
+                                        >
+                                            <div className="role-radio" />
+                                            <div className="role-info">
+                                                <span className="role-label">{role.label}</span>
+                                                <span className="role-desc">{role.desc}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {editStatus.error && (
+                                <div className="invite-error">
+                                    <AlertCircle size={16} />
+                                    {editStatus.error}
+                                </div>
+                            )}
+
+                            {editStatus.success && (
+                                <div className="invite-success">
+                                    <Check size={16} />
+                                    Member updated successfully!
+                                </div>
+                            )}
+
+                            <div className="invite-actions">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn btn-primary" disabled={editStatus.loading}>
+                                    {editStatus.loading ? (
+                                        <>Saving...</>
+                                    ) : (
+                                        <><Save size={16} /> Save Changes</>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && deletingMember && (
+                <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+                    <div className="delete-modal" onClick={e => e.stopPropagation()}>
+                        <div className="delete-modal-icon">
+                            <Trash2 size={32} />
+                        </div>
+                        <h2>Remove Team Member?</h2>
+                        <p>
+                            Are you sure you want to remove <strong>{deletingMember.name}</strong> from the team?
+                            This action cannot be undone.
+                        </p>
+
+                        {deleteStatus.error && (
+                            <div className="invite-error">
+                                <AlertCircle size={16} />
+                                {deleteStatus.error}
+                            </div>
+                        )}
+
+                        <div className="delete-actions">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setShowDeleteConfirm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn btn-danger"
+                                onClick={handleDeleteUser}
+                                disabled={deleteStatus.loading}
+                            >
+                                {deleteStatus.loading ? 'Removing...' : 'Remove Member'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
