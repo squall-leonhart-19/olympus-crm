@@ -1,0 +1,51 @@
+{
+    "name": "Olympus Command Center",
+    "short_name": "Olympus",
+    "description": "High-performance team operations and CRM",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0d0f12",
+    "theme_color": "#d4af37",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "business",
+        "productivity"
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Tasks",
+            "url": "/tasks",
+            "icons": [
+                {
+                    "src": "/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Pipeline",
+            "url": "/pipeline",
+            "icons": [
+                {
+                    "src": "/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ]
+}
