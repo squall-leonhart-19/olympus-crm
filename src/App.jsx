@@ -10,6 +10,7 @@ import Clients from './pages/Clients'
 import Team from './pages/Team'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import Projects from './pages/Projects'
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="team" element={<Team />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="projects" element={<Projects />} />
       </Route>
     </Routes>
   )

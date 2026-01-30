@@ -8,13 +8,15 @@ import {
     UserCircle,
     Settings,
     Zap,
-    Calendar
+    Calendar,
+    FolderOpen
 } from 'lucide-react'
 import './Sidebar.css'
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
+    { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/pipeline', icon: TrendingUp, label: 'Pipeline' },
     { path: '/clients', icon: Users, label: 'Clients' },
