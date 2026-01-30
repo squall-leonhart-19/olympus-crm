@@ -134,6 +134,12 @@ export default function Tasks() {
                     priority: t.priority,
                     assignee: t.assignee_name,
                     dueDate: t.due_date,
+                    dueTime: t.due_time,
+                    subtasks: t.subtasks || [],
+                    labels: t.labels || [],
+                    recurrence: t.recurrence,
+                    blockedBy: t.blocked_by || [],
+                    timeSpent: t.time_spent || 0,
                     createdAt: t.created_at,
                     completedAt: t.completed_at
                 }))
@@ -255,7 +261,12 @@ export default function Tasks() {
                         description: taskData.description,
                         priority: taskData.priority,
                         assignee_name: taskData.assignee,
-                        due_date: taskData.dueDate
+                        due_date: taskData.dueDate,
+                        due_time: taskData.dueTime || null,
+                        subtasks: taskData.subtasks || [],
+                        labels: taskData.labels || [],
+                        recurrence: taskData.recurrence || null,
+                        blocked_by: taskData.blockedBy || [],
                     })
                     .eq('id', editingTask.id)
             }
@@ -276,7 +287,12 @@ export default function Tasks() {
                         status: newTask.status,
                         priority: taskData.priority,
                         assignee_name: taskData.assignee,
-                        due_date: taskData.dueDate
+                        due_date: taskData.dueDate,
+                        due_time: taskData.dueTime || null,
+                        subtasks: taskData.subtasks || [],
+                        labels: taskData.labels || [],
+                        recurrence: taskData.recurrence || null,
+                        blocked_by: taskData.blockedBy || [],
                     })
                     .select()
                     .single()
@@ -301,6 +317,16 @@ export default function Tasks() {
 
         setIsModalOpen(false)
         setEditingTask(null)
+    }
+
+    const handleDuplicateTask = (taskData) => {
+        // Create a new task with the duplicated data
+        const duplicatedTask = {
+            ...taskData,
+            status: 'todo', // Reset status
+        }
+        setEditingTask(duplicatedTask)
+        // Stay in modal, user can edit before saving
     }
 
     const clearFilters = () => {
@@ -699,8 +725,10 @@ export default function Tasks() {
                     <TaskModal
                         task={editingTask}
                         teamMembers={teamMembers}
+                        allTasks={tasks}
                         onSave={handleSaveTask}
                         onDelete={editingTask?.id ? () => handleDeleteTask(editingTask.id) : null}
+                        onDuplicate={editingTask?.id ? handleDuplicateTask : null}
                         onClose={() => { setIsModalOpen(false); setEditingTask(null) }}
                         canEdit={canEdit}
                         canDelete={canDelete}

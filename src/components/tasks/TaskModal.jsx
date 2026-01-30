@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Trash2, DollarSign, Calendar, User, Flag, FileText, Clock, Edit2, Eye } from 'lucide-react'
+import { X, Trash2, DollarSign, Calendar, User, Flag, FileText, Clock, Edit2, Eye, Plus, Check, Tag, Copy, RefreshCw, Link2, Timer } from 'lucide-react'
 import TaskComments from './TaskComments'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import './TaskModal.css'
@@ -9,6 +9,21 @@ const PRIORITIES = [
     { value: 'medium', label: 'Medium', color: '#3b82f6', emoji: '🔵' },
     { value: 'high', label: 'High', color: '#f59e0b', emoji: '🟠' },
     { value: 'urgent', label: 'Urgent', color: '#ef4444', emoji: '🔴' },
+]
+
+const LABELS = [
+    { value: 'call', label: 'Call', color: '#8b5cf6' },
+    { value: 'follow-up', label: 'Follow-up', color: '#06b6d4' },
+    { value: 'admin', label: 'Admin', color: '#64748b' },
+    { value: 'meeting', label: 'Meeting', color: '#f43f5e' },
+    { value: 'review', label: 'Review', color: '#22c55e' },
+]
+
+const RECURRENCE_OPTIONS = [
+    { value: null, label: 'No repeat' },
+    { value: 'daily', label: 'Daily' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
 ]
 
 const QUICK_DATES = [
@@ -21,24 +36,32 @@ const QUICK_DATES = [
 export default function TaskModal({
     task,
     teamMembers = [],
+    allTasks = [],
     onSave,
     onDelete,
+    onDuplicate,
     onClose,
     canEdit = true,
     canDelete = false,
     currentUserName = ''
 }) {
-    const [mode, setMode] = useState(task ? 'view' : 'edit') // view or edit
+    const [mode, setMode] = useState(task ? 'view' : 'edit')
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         priority: 'medium',
         assignee: '',
         dueDate: '',
+        dueTime: '',
         dealId: '',
+        subtasks: [],
+        labels: [],
+        recurrence: null,
+        blockedBy: [],
     })
     const [deals, setDeals] = useState([])
     const [currentUser, setCurrentUser] = useState('User')
+    const [newSubtask, setNewSubtask] = useState('')
 
     useEffect(() => {
         if (task) {
@@ -48,7 +71,12 @@ export default function TaskModal({
                 priority: task.priority || 'medium',
                 assignee: task.assignee || '',
                 dueDate: task.dueDate || '',
+                dueTime: task.dueTime || '',
                 dealId: task.dealId || '',
+                subtasks: task.subtasks || [],
+                labels: task.labels || [],
+                recurrence: task.recurrence || null,
+                blockedBy: task.blockedBy || [],
             })
             setMode('view')
         } else {
@@ -99,6 +127,35 @@ export default function TaskModal({
         handleChange('dueDate', dateStr)
     }
 
+    // Subtasks handlers
+    const addSubtask = () => {
+        if (!newSubtask.trim()) return
+        const subtask = { id: Date.now(), text: newSubtask.trim(), done: false }
+        handleChange('subtasks', [...formData.subtasks, subtask])
+        setNewSubtask('')
+    }
+
+    const toggleSubtask = (id) => {
+        const updated = formData.subtasks.map(st =>
+            st.id === id ? { ...st, done: !st.done } : st
+        )
+        handleChange('subtasks', updated)
+    }
+
+    const removeSubtask = (id) => {
+        handleChange('subtasks', formData.subtasks.filter(st => st.id !== id))
+    }
+
+    // Labels handlers
+    const toggleLabel = (labelValue) => {
+        const current = formData.labels || []
+        if (current.includes(labelValue)) {
+            handleChange('labels', current.filter(l => l !== labelValue))
+        } else {
+            handleChange('labels', [...current, labelValue])
+        }
+    }
+
     const formatDateDisplay = (dateStr) => {
         if (!dateStr) return 'No date set'
         const date = new Date(dateStr)
@@ -111,8 +168,20 @@ export default function TaskModal({
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     }
 
+    const handleDuplicate = () => {
+        if (onDuplicate) {
+            onDuplicate({
+                ...formData,
+                title: `${formData.title} (Copy)`,
+            })
+        }
+    }
+
     const selectedDeal = deals.find(d => d.id === formData.dealId)
     const selectedPriority = PRIORITIES.find(p => p.value === formData.priority)
+    const subtaskProgress = formData.subtasks.length > 0
+        ? Math.round((formData.subtasks.filter(s => s.done).length / formData.subtasks.length) * 100)
+        : 0
 
     // Find assignee member data
     const assigneeMember = teamMembers.find(m =>
@@ -137,15 +206,29 @@ export default function TaskModal({
                                 >
                                     {selectedPriority?.emoji} {selectedPriority?.label}
                                 </span>
+                                {formData.labels?.map(label => {
+                                    const l = LABELS.find(lb => lb.value === label)
+                                    return l ? (
+                                        <span key={label} className="label-badge" style={{ background: l.color }}>
+                                            {l.label}
+                                        </span>
+                                    ) : null
+                                })}
+                                {formData.recurrence && (
+                                    <span className="recurrence-badge">
+                                        <RefreshCw size={12} /> {formData.recurrence}
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <div className="header-actions">
+                            {onDuplicate && (
+                                <button className="action-icon-btn" onClick={handleDuplicate} title="Duplicate">
+                                    <Copy size={18} />
+                                </button>
+                            )}
                             {canEdit && (
-                                <button
-                                    className="edit-mode-btn"
-                                    onClick={() => setMode('edit')}
-                                    title="Edit Task"
-                                >
+                                <button className="edit-mode-btn" onClick={() => setMode('edit')} title="Edit Task">
                                     <Edit2 size={18} />
                                     Edit
                                 </button>
@@ -163,6 +246,28 @@ export default function TaskModal({
                             <div className="task-detail-section">
                                 <div className="detail-label"><FileText size={14} /> Description</div>
                                 <p className="detail-value description-text">{formData.description}</p>
+                            </div>
+                        )}
+
+                        {/* Subtasks */}
+                        {formData.subtasks?.length > 0 && (
+                            <div className="task-detail-section">
+                                <div className="detail-label">
+                                    <Check size={14} /> Subtasks
+                                    <span className="subtask-progress">{subtaskProgress}%</span>
+                                </div>
+                                <div className="subtasks-view-list">
+                                    {formData.subtasks.map(st => (
+                                        <div
+                                            key={st.id}
+                                            className={`subtask-view-item ${st.done ? 'done' : ''}`}
+                                            onClick={() => canEdit && toggleSubtask(st.id)}
+                                        >
+                                            <span className="subtask-check">{st.done ? '✓' : '○'}</span>
+                                            <span>{st.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
@@ -190,7 +295,10 @@ export default function TaskModal({
                             {/* Due Date */}
                             <div className="task-detail-card">
                                 <div className="detail-label"><Calendar size={14} /> Due Date</div>
-                                <div className="detail-value">{formatDateDisplay(formData.dueDate)}</div>
+                                <div className="detail-value">
+                                    {formatDateDisplay(formData.dueDate)}
+                                    {formData.dueTime && <span className="due-time"> at {formData.dueTime}</span>}
+                                </div>
                             </div>
 
                             {/* Linked Deal */}
@@ -230,7 +338,7 @@ export default function TaskModal({
     // EDIT MODE
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="task-modal" onClick={e => e.stopPropagation()}>
+            <div className="task-modal task-modal-large" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="task-modal-header">
                     <div className="header-content">
@@ -239,11 +347,7 @@ export default function TaskModal({
                     </div>
                     <div className="header-actions">
                         {task && (
-                            <button
-                                className="view-mode-btn"
-                                onClick={() => setMode('view')}
-                                title="View Task"
-                            >
+                            <button className="view-mode-btn" onClick={() => setMode('view')} title="View Task">
                                 <Eye size={18} />
                             </button>
                         )}
@@ -278,115 +382,193 @@ export default function TaskModal({
                         />
                     </div>
 
-                    {/* Priority Selector */}
-                    <div className="form-section">
-                        <label><Flag size={14} /> Priority</label>
-                        <div className="priority-grid">
-                            {PRIORITIES.map(p => (
-                                <button
-                                    key={p.value}
-                                    type="button"
-                                    className={`priority-btn ${formData.priority === p.value ? 'active' : ''}`}
-                                    style={{ '--prio-color': p.color }}
-                                    onClick={() => handleChange('priority', p.value)}
-                                >
-                                    <span className="prio-emoji">{p.emoji}</span>
-                                    <span className="prio-label">{p.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Date Selector */}
-                    <div className="form-section">
-                        <label><Calendar size={14} /> Due Date</label>
-                        <div className="date-section">
-                            <div className="quick-dates">
-                                {QUICK_DATES.map(d => (
-                                    <button
-                                        key={d.label}
-                                        type="button"
-                                        className="quick-date-btn"
-                                        onClick={() => setQuickDate(d.days)}
-                                    >
-                                        {d.label}
-                                    </button>
-                                ))}
+                    {/* Two Column Layout */}
+                    <div className="form-columns">
+                        <div className="form-column">
+                            {/* Priority Selector */}
+                            <div className="form-section">
+                                <label><Flag size={14} /> Priority</label>
+                                <div className="priority-grid">
+                                    {PRIORITIES.map(p => (
+                                        <button
+                                            key={p.value}
+                                            type="button"
+                                            className={`priority-btn ${formData.priority === p.value ? 'active' : ''}`}
+                                            style={{ '--prio-color': p.color }}
+                                            onClick={() => handleChange('priority', p.value)}
+                                        >
+                                            <span className="prio-emoji">{p.emoji}</span>
+                                            <span className="prio-label">{p.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="date-picker-row">
-                                <input
-                                    type="date"
-                                    className="date-input"
-                                    value={formData.dueDate}
-                                    onChange={(e) => handleChange('dueDate', e.target.value)}
-                                />
-                                <div className="date-display">
-                                    <Clock size={16} />
-                                    <span>{formatDateDisplay(formData.dueDate)}</span>
+
+                            {/* Labels */}
+                            <div className="form-section">
+                                <label><Tag size={14} /> Labels</label>
+                                <div className="labels-grid">
+                                    {LABELS.map(l => (
+                                        <button
+                                            key={l.value}
+                                            type="button"
+                                            className={`label-btn ${formData.labels?.includes(l.value) ? 'active' : ''}`}
+                                            style={{ '--label-color': l.color }}
+                                            onClick={() => toggleLabel(l.value)}
+                                        >
+                                            {l.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Date & Time */}
+                            <div className="form-section">
+                                <label><Calendar size={14} /> Due Date & Time</label>
+                                <div className="date-section">
+                                    <div className="quick-dates">
+                                        {QUICK_DATES.map(d => (
+                                            <button
+                                                key={d.label}
+                                                type="button"
+                                                className="quick-date-btn"
+                                                onClick={() => setQuickDate(d.days)}
+                                            >
+                                                {d.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="date-time-row">
+                                        <input
+                                            type="date"
+                                            className="date-input"
+                                            value={formData.dueDate}
+                                            onChange={(e) => handleChange('dueDate', e.target.value)}
+                                        />
+                                        <input
+                                            type="time"
+                                            className="time-input"
+                                            value={formData.dueTime}
+                                            onChange={(e) => handleChange('dueTime', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Recurrence */}
+                            <div className="form-section">
+                                <label><RefreshCw size={14} /> Repeat</label>
+                                <div className="recurrence-grid">
+                                    {RECURRENCE_OPTIONS.map(r => (
+                                        <button
+                                            key={r.value || 'none'}
+                                            type="button"
+                                            className={`recurrence-btn ${formData.recurrence === r.value ? 'active' : ''}`}
+                                            onClick={() => handleChange('recurrence', r.value)}
+                                        >
+                                            {r.label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Assignee */}
-                    <div className="form-section">
-                        <label><User size={14} /> Assign to</label>
-                        <div className="assignee-grid">
-                            <button
-                                type="button"
-                                className={`assignee-btn ${formData.assignee === '' ? 'active' : ''}`}
-                                onClick={() => handleChange('assignee', '')}
-                            >
-                                <span className="assignee-avatar">?</span>
-                                <span>Unassigned</span>
-                            </button>
-                            {teamMembers.map(member => {
-                                const memberName = typeof member === 'string' ? member : member.name
-                                const displayName = typeof member === 'string' ? member : (member.nickname || member.name)
-                                const avatarUrl = typeof member === 'string' ? null : member.avatar_url
-
-                                return (
+                        <div className="form-column">
+                            {/* Assignee */}
+                            <div className="form-section">
+                                <label><User size={14} /> Assign to</label>
+                                <div className="assignee-grid compact">
                                     <button
-                                        key={memberName}
                                         type="button"
-                                        className={`assignee-btn ${formData.assignee === memberName ? 'active' : ''}`}
-                                        onClick={() => handleChange('assignee', memberName)}
+                                        className={`assignee-btn ${formData.assignee === '' ? 'active' : ''}`}
+                                        onClick={() => handleChange('assignee', '')}
                                     >
-                                        {avatarUrl ? (
-                                            <img src={avatarUrl} alt={displayName} className="assignee-avatar-img" />
-                                        ) : (
-                                            <span className="assignee-avatar">{memberName.charAt(0)}</span>
-                                        )}
-                                        <span>{displayName}</span>
+                                        <span className="assignee-avatar">?</span>
+                                        <span>Unassigned</span>
                                     </button>
-                                )
-                            })}
-                        </div>
-                    </div>
+                                    {teamMembers.map(member => {
+                                        const memberName = typeof member === 'string' ? member : member.name
+                                        const displayName = typeof member === 'string' ? member : (member.nickname || member.name)
+                                        const avatarUrl = typeof member === 'string' ? null : member.avatar_url
 
-                    {/* Deal Link */}
-                    {deals.length > 0 && (
-                        <div className="form-section">
-                            <label><DollarSign size={14} /> Link to Deal</label>
-                            <select
-                                className="select-input"
-                                value={formData.dealId}
-                                onChange={(e) => handleChange('dealId', e.target.value)}
-                            >
-                                <option value="">No deal linked</option>
-                                {deals.map(deal => (
-                                    <option key={deal.id} value={deal.id}>
-                                        {deal.title} (${deal.value?.toLocaleString()})
-                                    </option>
-                                ))}
-                            </select>
-                            {selectedDeal && (
-                                <div className="deal-badge">
-                                    💰 This task is linked to ${selectedDeal.value?.toLocaleString()} deal
+                                        return (
+                                            <button
+                                                key={memberName}
+                                                type="button"
+                                                className={`assignee-btn ${formData.assignee === memberName ? 'active' : ''}`}
+                                                onClick={() => handleChange('assignee', memberName)}
+                                            >
+                                                {avatarUrl ? (
+                                                    <img src={avatarUrl} alt={displayName} className="assignee-avatar-img" />
+                                                ) : (
+                                                    <span className="assignee-avatar">{memberName.charAt(0)}</span>
+                                                )}
+                                                <span>{displayName}</span>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Subtasks */}
+                            <div className="form-section">
+                                <label><Check size={14} /> Subtasks</label>
+                                <div className="subtasks-section">
+                                    {formData.subtasks.map(st => (
+                                        <div key={st.id} className={`subtask-item ${st.done ? 'done' : ''}`}>
+                                            <button
+                                                type="button"
+                                                className="subtask-toggle"
+                                                onClick={() => toggleSubtask(st.id)}
+                                            >
+                                                {st.done ? '✓' : '○'}
+                                            </button>
+                                            <span className="subtask-text">{st.text}</span>
+                                            <button
+                                                type="button"
+                                                className="subtask-remove"
+                                                onClick={() => removeSubtask(st.id)}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <div className="add-subtask-row">
+                                        <input
+                                            type="text"
+                                            className="subtask-input"
+                                            placeholder="Add subtask..."
+                                            value={newSubtask}
+                                            onChange={(e) => setNewSubtask(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSubtask())}
+                                        />
+                                        <button type="button" className="add-subtask-btn" onClick={addSubtask}>
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Deal Link */}
+                            {deals.length > 0 && (
+                                <div className="form-section">
+                                    <label><DollarSign size={14} /> Link to Deal</label>
+                                    <select
+                                        className="select-input"
+                                        value={formData.dealId}
+                                        onChange={(e) => handleChange('dealId', e.target.value)}
+                                    >
+                                        <option value="">No deal linked</option>
+                                        {deals.map(deal => (
+                                            <option key={deal.id} value={deal.id}>
+                                                {deal.title} (${deal.value?.toLocaleString()})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             )}
                         </div>
-                    )}
+                    </div>
 
                     {/* Actions */}
                     <div className="modal-actions">

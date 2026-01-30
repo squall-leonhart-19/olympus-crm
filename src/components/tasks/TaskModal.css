@@ -582,3 +582,318 @@
     display: flex;
     justify-content: flex-end;
 }
+
+/* ======= NEW FEATURES CSS ======= */
+
+/* Large Modal */
+.task-modal-large {
+    max-width: 720px;
+}
+
+/* Two Column Layout */
+.form-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+@media (max-width: 700px) {
+    .form-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Labels */
+.labels-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.label-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.label-btn:hover {
+    border-color: var(--label-color);
+    color: var(--label-color);
+}
+
+.label-btn.active {
+    background: var(--label-color);
+    border-color: var(--label-color);
+    color: #fff;
+}
+
+.label-badge {
+    display: inline-flex;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Recurrence */
+.recurrence-grid {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.recurrence-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.recurrence-btn:hover {
+    border-color: var(--gold-primary);
+}
+
+.recurrence-btn.active {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+}
+
+.recurrence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #8b5cf6;
+}
+
+/* Subtasks */
+.subtasks-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.subtask-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.subtask-item.done {
+    opacity: 0.6;
+}
+
+.subtask-item.done .subtask-text {
+    text-decoration: line-through;
+}
+
+.subtask-toggle {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.subtask-item.done .subtask-toggle {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+}
+
+.subtask-text {
+    flex: 1;
+    font-size: 0.85rem;
+}
+
+.subtask-remove {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.subtask-item:hover .subtask-remove {
+    opacity: 1;
+}
+
+.subtask-remove:hover {
+    color: var(--danger);
+}
+
+.add-subtask-row {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.subtask-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.subtask-input:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+}
+
+.add-subtask-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.add-subtask-btn:hover {
+    background: var(--gold-primary);
+    border-color: var(--gold-primary);
+    color: #000;
+}
+
+/* Subtasks View Mode */
+.subtasks-view-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.subtask-view-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.subtask-view-item:hover {
+    background: var(--bg-hover);
+}
+
+.subtask-view-item.done {
+    opacity: 0.6;
+}
+
+.subtask-view-item.done span:last-child {
+    text-decoration: line-through;
+}
+
+.subtask-check {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.subtask-view-item.done .subtask-check {
+    color: var(--success);
+}
+
+.subtask-progress {
+    margin-left: auto;
+    padding: 2px 8px;
+    background: rgba(34, 197, 94, 0.15);
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+/* Due Time */
+.date-time-row {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.time-input {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+}
+
+.due-time {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Compact Assignee Grid */
+.assignee-grid.compact {
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+/* Action Icon Button */
+.action-icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.action-icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
