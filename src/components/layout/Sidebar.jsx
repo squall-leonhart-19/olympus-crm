@@ -9,7 +9,8 @@ import {
     Settings,
     Zap,
     Calendar,
-    FolderOpen
+    FolderOpen,
+    StickyNote
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -17,6 +18,7 @@ const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
+    { path: '/notes', icon: StickyNote, label: 'Notes' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/pipeline', icon: TrendingUp, label: 'Pipeline' },
     { path: '/clients', icon: Users, label: 'Clients' },
