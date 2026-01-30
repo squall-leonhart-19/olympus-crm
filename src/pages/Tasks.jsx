@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Header from '../components/layout/Header'
 import TaskModal from '../components/tasks/TaskModal'
-import { Plus, LayoutGrid, List, Filter, X, ChevronDown, Calendar, User, Flag, Clock, Search, Check, MoreHorizontal } from 'lucide-react'
+import { Plus, LayoutGrid, List, Filter, X, ChevronDown, Calendar, User, Flag, Clock, Search, Check, MoreHorizontal, FolderOpen } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Tasks.css'
 
@@ -79,8 +79,10 @@ export default function Tasks() {
     const [filters, setFilters] = useState({
         assignee: '',
         priority: '',
-        status: ''
+        status: '',
+        project: ''
     })
+    const [projects, setProjects] = useState([])
 
     const today = new Date()
     const dateHeader = today.toLocaleDateString('en-US', {
@@ -112,6 +114,7 @@ export default function Tasks() {
         loadTasks()
         loadTeamMembers()
         loadCurrentUser()
+        loadProjects()
     }, [])
 
     const loadTasks = async () => {
@@ -179,6 +182,17 @@ export default function Tasks() {
                     setCurrentUserRole(member.role.toLowerCase())
                 }
             }
+        } catch (e) { }
+    }
+
+    const loadProjects = async () => {
+        if (!isSupabaseConfigured) return
+        try {
+            const { data } = await supabase
+                .from('projects')
+                .select('id, name, icon, color')
+                .order('created_at', { ascending: true })
+            if (data) setProjects(data)
         } catch (e) { }
     }
 
@@ -386,7 +400,7 @@ export default function Tasks() {
         setSelectedTasks([])
     }
 
-    const hasActiveFilters = filters.assignee || filters.priority || filters.status || searchQuery
+    const hasActiveFilters = filters.assignee || filters.priority || filters.status || filters.project || searchQuery
 
     // Filter tasks including search
     const filteredTasks = tasks.filter(task => {
@@ -401,6 +415,7 @@ export default function Tasks() {
         if (filters.assignee && task.assignee !== filters.assignee) return false
         if (filters.priority && task.priority !== filters.priority) return false
         if (filters.status && task.status !== filters.status) return false
+        if (filters.project && task.project_id !== filters.project) return false
         return true
     })
 
@@ -557,6 +572,21 @@ export default function Tasks() {
                                 ))}
                             </select>
                         </div>
+                        {projects.length > 0 && (
+                            <div className="filter-group">
+                                <label><FolderOpen size={14} /> Project</label>
+                                <select
+                                    value={filters.project}
+                                    onChange={(e) => setFilters(f => ({ ...f, project: e.target.value }))}
+                                    className="input"
+                                >
+                                    <option value="">All Projects</option>
+                                    {projects.map(p => (
+                                        <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         {hasActiveFilters && (
                             <button className="btn btn-ghost" onClick={clearFilters}>
                                 <X size={16} />
