@@ -51,6 +51,7 @@ export default function TaskModal({
         description: '',
         priority: 'medium',
         assignee: '',
+        assignees: [],
         dueDate: '',
         dueTime: '',
         dealId: '',
@@ -65,11 +66,14 @@ export default function TaskModal({
 
     useEffect(() => {
         if (task) {
+            // Support both old single assignee and new assignees array
+            const assigneesFromTask = task.assignees?.length ? task.assignees : (task.assignee ? [task.assignee] : [])
             setFormData({
                 title: task.title || '',
                 description: task.description || '',
                 priority: task.priority || 'medium',
                 assignee: task.assignee || '',
+                assignees: assigneesFromTask,
                 dueDate: task.dueDate || '',
                 dueTime: task.dueTime || '',
                 dealId: task.dealId || '',
@@ -118,6 +122,22 @@ export default function TaskModal({
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
+    }
+
+    // Toggle assignee in multi-select
+    const toggleAssignee = (memberName) => {
+        setFormData(prev => {
+            const current = prev.assignees || []
+            const isSelected = current.includes(memberName)
+            const updated = isSelected
+                ? current.filter(n => n !== memberName)
+                : [...current, memberName]
+            return {
+                ...prev,
+                assignees: updated,
+                assignee: updated[0] || '' // Keep backward compatibility
+            }
+        })
     }
 
     const setQuickDate = (days) => {
@@ -474,29 +494,22 @@ export default function TaskModal({
                         </div>
 
                         <div className="form-column">
-                            {/* Assignee */}
+                            {/* Assignee - Multi-select */}
                             <div className="form-section">
-                                <label><User size={14} /> Assign to</label>
+                                <label><User size={14} /> Assign to (click to select multiple)</label>
                                 <div className="assignee-grid compact">
-                                    <button
-                                        type="button"
-                                        className={`assignee-btn ${formData.assignee === '' ? 'active' : ''}`}
-                                        onClick={() => handleChange('assignee', '')}
-                                    >
-                                        <span className="assignee-avatar">?</span>
-                                        <span>Unassigned</span>
-                                    </button>
                                     {teamMembers.map(member => {
                                         const memberName = typeof member === 'string' ? member : member.name
                                         const displayName = typeof member === 'string' ? member : (member.nickname || member.name)
                                         const avatarUrl = typeof member === 'string' ? null : member.avatar_url
+                                        const isSelected = formData.assignees?.includes(memberName)
 
                                         return (
                                             <button
                                                 key={memberName}
                                                 type="button"
-                                                className={`assignee-btn ${formData.assignee === memberName ? 'active' : ''}`}
-                                                onClick={() => handleChange('assignee', memberName)}
+                                                className={`assignee-btn ${isSelected ? 'active' : ''}`}
+                                                onClick={() => toggleAssignee(memberName)}
                                             >
                                                 {avatarUrl ? (
                                                     <img src={avatarUrl} alt={displayName} className="assignee-avatar-img" />
@@ -504,6 +517,7 @@ export default function TaskModal({
                                                     <span className="assignee-avatar">{memberName.charAt(0)}</span>
                                                 )}
                                                 <span>{displayName}</span>
+                                                {isSelected && <span className="assignee-check">✓</span>}
                                             </button>
                                         )
                                     })}
