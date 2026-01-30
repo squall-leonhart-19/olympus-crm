@@ -678,6 +678,20 @@ export default function Tasks() {
                                                                             </span>
                                                                         )
                                                                     })()}
+                                                                    {/* Label badges */}
+                                                                    {task.labels?.length > 0 && (
+                                                                        <div className="task-labels">
+                                                                            {task.labels.slice(0, 2).map(label => (
+                                                                                <span key={label} className={`task-label-mini ${label}`}>{label}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                    {/* Subtask progress */}
+                                                                    {task.subtasks?.length > 0 && (
+                                                                        <span className="task-subtask-indicator">
+                                                                            ✓ {task.subtasks.filter(s => s.done).length}/{task.subtasks.length}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>

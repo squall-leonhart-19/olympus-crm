@@ -826,3 +826,56 @@
     background: var(--bg-hover);
     color: var(--text-primary);
 }
+
+/* ======= TASK CARD LABELS & SUBTASKS ======= */
+
+.task-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.task-label-mini {
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.task-label-mini.call {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+}
+
+.task-label-mini.follow-up {
+    background: rgba(6, 182, 212, 0.2);
+    color: #06b6d4;
+}
+
+.task-label-mini.admin {
+    background: rgba(100, 116, 139, 0.2);
+    color: #64748b;
+}
+
+.task-label-mini.meeting {
+    background: rgba(244, 63, 94, 0.2);
+    color: #f43f5e;
+}
+
+.task-label-mini.review {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.task-subtask-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(34, 197, 94, 0.15);
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--success);
+}
