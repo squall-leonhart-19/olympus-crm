@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Header from '../components/layout/Header'
-import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle, Mail, Lock, User, Briefcase, Edit2, Trash2, Save } from 'lucide-react'
+import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle, Mail, Lock, User, Briefcase, Edit2, Trash2, Save, Image, AtSign } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Team.css'
 
@@ -14,8 +14,10 @@ export default function Team() {
     // Edit user state
     const [showEditModal, setShowEditModal] = useState(false)
     const [editingMember, setEditingMember] = useState(null)
-    const [editForm, setEditForm] = useState({ name: '', email: '', role: '' })
+    const [editForm, setEditForm] = useState({ name: '', nickname: '', email: '', role: '', avatar_url: '' })
     const [editStatus, setEditStatus] = useState({ loading: false, error: null, success: false })
+    const [avatarUploading, setAvatarUploading] = useState(false)
+    const avatarInputRef = useRef(null)
 
     // Delete confirmation state
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -146,8 +148,10 @@ export default function Team() {
         setEditingMember(member)
         setEditForm({
             name: member.name || '',
+            nickname: member.nickname || '',
             email: member.email || '',
-            role: member.role || 'member'
+            role: member.role || 'member',
+            avatar_url: member.avatar_url || ''
         })
         setEditStatus({ loading: false, error: null, success: false })
         setShowEditModal(true)
@@ -164,8 +168,10 @@ export default function Team() {
                 .from('team_members')
                 .update({
                     name: editForm.name,
+                    nickname: editForm.nickname,
                     email: editForm.email,
-                    role: editForm.role
+                    role: editForm.role,
+                    avatar_url: editForm.avatar_url
                 })
                 .eq('id', editingMember.id)
 
@@ -182,6 +188,42 @@ export default function Team() {
 
         } catch (error) {
             setEditStatus({ loading: false, error: error.message, success: false })
+        }
+    }
+
+    // Handle avatar upload
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setAvatarUploading(true)
+
+        try {
+            // Create unique filename
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${editingMember.id}-${Date.now()}.${fileExt}`
+            const filePath = `avatars/${fileName}`
+
+            // Upload to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file, { upsert: true })
+
+            if (uploadError) throw uploadError
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath)
+
+            // Update form with new URL
+            setEditForm(f => ({ ...f, avatar_url: publicUrl }))
+            setAvatarUploading(false)
+
+        } catch (error) {
+            console.error('Avatar upload error:', error)
+            setEditStatus({ loading: false, error: 'Failed to upload image. Make sure the avatars bucket exists in Supabase Storage.', success: false })
+            setAvatarUploading(false)
         }
     }
 
@@ -261,9 +303,16 @@ export default function Team() {
                                     <div key={member.id} className={`leaderboard-item ${index === 0 ? 'first' : ''}`}>
                                         <div className="rank">#{index + 1}</div>
                                         <div className="member-info">
-                                            <div className="member-avatar">{member.name.charAt(0)}</div>
+                                            {member.avatar_url ? (
+                                                <img src={member.avatar_url} alt={member.name} className="member-avatar-img" />
+                                            ) : (
+                                                <div className="member-avatar">{member.name.charAt(0)}</div>
+                                            )}
                                             <div>
-                                                <div className="member-name">{member.name}</div>
+                                                <div className="member-name">
+                                                    {member.nickname || member.name}
+                                                    {member.nickname && <span className="member-fullname">({member.name})</span>}
+                                                </div>
                                                 <div className="member-role">{member.role}</div>
                                             </div>
                                         </div>
@@ -283,9 +332,16 @@ export default function Team() {
                                 {teamMembers.map(member => (
                                     <div key={member.id} className="performance-card">
                                         <div className="perf-header">
-                                            <div className="member-avatar large">{member.name.charAt(0)}</div>
+                                            {member.avatar_url ? (
+                                                <img src={member.avatar_url} alt={member.name} className="member-avatar-img large" />
+                                            ) : (
+                                                <div className="member-avatar large">{member.name.charAt(0)}</div>
+                                            )}
                                             <div>
-                                                <div className="member-name">{member.name}</div>
+                                                <div className="member-name">
+                                                    {member.nickname || member.name}
+                                                    {member.nickname && <span className="member-fullname">({member.name})</span>}
+                                                </div>
                                                 <div className="member-role">{member.role}</div>
                                                 {member.email && <div className="member-email">{member.email}</div>}
                                             </div>
@@ -491,6 +547,67 @@ export default function Team() {
                                     onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                                     required
                                 />
+                            </div>
+
+                            {/* Avatar Upload */}
+                            <div className="form-group">
+                                <label>
+                                    <Image size={14} />
+                                    Profile Picture
+                                </label>
+                                <div className="avatar-upload-area">
+                                    <div className="avatar-preview">
+                                        {editForm.avatar_url ? (
+                                            <img src={editForm.avatar_url} alt="Avatar" className="avatar-preview-img" />
+                                        ) : (
+                                            <div className="avatar-preview-placeholder">
+                                                {editForm.name.charAt(0) || '?'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="avatar-upload-actions">
+                                        <input
+                                            type="file"
+                                            ref={avatarInputRef}
+                                            onChange={handleAvatarUpload}
+                                            accept="image/*"
+                                            style={{ display: 'none' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => avatarInputRef.current?.click()}
+                                            disabled={avatarUploading}
+                                        >
+                                            {avatarUploading ? 'Uploading...' : 'Upload Image'}
+                                        </button>
+                                        {editForm.avatar_url && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-ghost btn-sm"
+                                                onClick={() => setEditForm(f => ({ ...f, avatar_url: '' }))}
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Nickname */}
+                            <div className="form-group">
+                                <label>
+                                    <AtSign size={14} />
+                                    Nickname (Display Name)
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="e.g. Zeus, Ale, Max..."
+                                    value={editForm.nickname}
+                                    onChange={e => setEditForm(f => ({ ...f, nickname: e.target.value }))}
+                                />
+                                <span className="form-hint">What shows up instead of full name</span>
                             </div>
 
                             <div className="form-group">

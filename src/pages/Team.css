@@ -72,6 +72,28 @@
     font-size: 1.25rem;
 }
 
+/* Avatar Images */
+.member-avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    border: 2px solid rgba(212, 175, 55, 0.3);
+}
+
+.member-avatar-img.large {
+    width: 48px;
+    height: 48px;
+}
+
+/* Nickname / Fullname display */
+.member-fullname {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 4px;
+}
+
 .member-name {
     font-weight: 600;
 }
@@ -467,4 +489,60 @@
     display: flex;
     gap: var(--spacing-sm);
     justify-content: center;
+}
+
+/* Avatar Upload */
+.avatar-upload-area {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-color);
+}
+
+.avatar-preview {
+    flex-shrink: 0;
+}
+
+.avatar-preview-img {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    border: 2px solid var(--gold-primary);
+}
+
+.avatar-preview-placeholder {
+    width: 64px;
+    height: 64px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold-primary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.avatar-upload-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+/* Small Button */
+.btn-sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.75rem;
+}
+
+/* Form Hint */
+.form-hint {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: var(--spacing-xs);
 }
