@@ -138,7 +138,7 @@ export default function Dashboard() {
         setLoading(false)
     }
 
-    const isEmpty = metrics.tasksCompleted === 0 && metrics.revenue === 0 && metrics.pipelineValue === 0
+    const isEmpty = metrics.tasksCompleted === 0 && metrics.revenue === 0 && metrics.pipelineValue === 0 && todayTasks.length === 0 && metrics.overdueTasks === 0
 
     return (
         <>

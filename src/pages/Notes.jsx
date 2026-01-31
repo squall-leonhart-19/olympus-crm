@@ -84,7 +84,12 @@ export default function Notes() {
         }
     }
 
+    const [isCreating, setIsCreating] = useState(false)
+
     const createNote = async () => {
+        if (isCreating) return // Prevent double-click
+        setIsCreating(true)
+
         const newNote = {
             id: `note_${Date.now()}`,
             title: 'New Note',
@@ -104,6 +109,8 @@ export default function Notes() {
                 await supabase.from('notes').insert(newNote)
             } catch (e) { }
         }
+
+        setIsCreating(false)
     }
 
     const deleteNote = async (noteId) => {

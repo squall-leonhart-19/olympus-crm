@@ -171,3 +171,17 @@
 .demo-btn:hover {
     background: rgba(212, 175, 55, 0.1);
 }
+
+/* Forgot Password Link */
+.forgot-password-link {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: right;
+    text-decoration: none;
+    margin-top: var(--spacing-xs);
+    transition: color var(--transition-fast);
+}
+
+.forgot-password-link:hover {
+    color: var(--gold-primary);
+}

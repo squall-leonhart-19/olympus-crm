@@ -56,7 +56,7 @@ export default function Team() {
                     return new Date(t.due_date) < new Date()
                 }).length
                 const total = memberTasks.length
-                const onTimeRate = total > 0 ? Math.round(((total - overdue) / total) * 100) : 100
+                const onTimeRate = total > 0 ? Math.round(((total - overdue) / total) * 100) : null
 
                 return {
                     ...member,
@@ -357,7 +357,7 @@ export default function Team() {
                                             <div className="perf-stat">
                                                 <Clock size={16} />
                                                 <div>
-                                                    <span className="perf-value">{member.onTimeRate}%</span>
+                                                    <span className="perf-value">{member.onTimeRate !== null ? `${member.onTimeRate}%` : 'N/A'}</span>
                                                     <span className="perf-label">On-Time</span>
                                                 </div>
                                             </div>

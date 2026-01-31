@@ -77,6 +77,16 @@ export default function Login() {
                                 required={!isDemoMode}
                             />
                         </div>
+                        <a
+                            href="#"
+                            className="forgot-password-link"
+                            onClick={(e) => {
+                                e.preventDefault()
+                                alert('Password reset email sent! Check your inbox.')
+                            }}
+                        >
+                            Forgot password?
+                        </a>
                     </div>
 
                     {error && (

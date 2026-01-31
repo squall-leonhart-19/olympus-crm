@@ -21,16 +21,21 @@ export default function TaskComments({ taskId, currentUser }) {
             return
         }
 
-        const { data, error } = await supabase
-            .from('task_comments')
-            .select('*')
-            .eq('task_id', taskId)
-            .order('created_at', { ascending: true })
+        try {
+            const { data, error } = await supabase
+                .from('task_comments')
+                .select('*')
+                .eq('task_id', taskId)
+                .order('created_at', { ascending: true })
 
-        if (data) {
-            setComments(data)
+            if (data) {
+                setComments(data)
+            }
+        } catch (e) {
+            console.error('Error loading comments:', e)
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     const handleSubmit = async (e) => {
