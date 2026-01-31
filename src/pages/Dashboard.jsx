@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Header from '../components/layout/Header'
+import LoadingSkeleton from '../styles/LoadingSkeleton'
 import {
     TrendingUp,
     CheckCircle,
@@ -179,7 +180,7 @@ export default function Dashboard() {
                 </div>
 
                 {loading ? (
-                    <div className="loading-state">Loading dashboard...</div>
+                    <LoadingSkeleton type="metrics" count={4} />
                 ) : isEmpty ? (
                     <div className="empty-dashboard">
                         <div className="empty-icon">🏛️</div>

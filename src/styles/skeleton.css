@@ -1,0 +1,168 @@
+/* Loading Skeleton Styles */
+
+.skeleton {
+    background: linear-gradient(90deg,
+            var(--bg-secondary) 25%,
+            var(--bg-elevated) 50%,
+            var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Skeleton Sizes */
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.skeleton-text.short {
+    width: 40%;
+}
+
+.skeleton-text.medium {
+    width: 70%;
+}
+
+.skeleton-text.full {
+    width: 100%;
+}
+
+.skeleton-title {
+    height: 1.5rem;
+    width: 60%;
+    margin-bottom: var(--spacing-sm);
+}
+
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.skeleton-button {
+    height: 36px;
+    width: 100px;
+    border-radius: var(--radius-sm);
+}
+
+/* Skeleton Layouts */
+.skeleton-task-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.skeleton-task-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.skeleton-task-header .skeleton-avatar {
+    width: 24px;
+    height: 24px;
+}
+
+.skeleton-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.skeleton-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.skeleton-metric-card {
+    height: 100px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+/* Team Page Skeleton */
+.skeleton-team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.skeleton-team-card {
+    padding: var(--spacing-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.skeleton-team-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.skeleton-team-header .skeleton-avatar {
+    width: 48px;
+    height: 48px;
+}
+
+.skeleton-team-stats {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.skeleton-stat {
+    flex: 1;
+    height: 60px;
+    border-radius: var(--radius-sm);
+}
+
+/* Pipeline Skeleton */
+.skeleton-pipeline {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+}
+
+.skeleton-column {
+    min-width: 280px;
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.skeleton-column-header {
+    margin-bottom: var(--spacing-md);
+}
+
+.skeleton-deal-card {
+    height: 80px;
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+}

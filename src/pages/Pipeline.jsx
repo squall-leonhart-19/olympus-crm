@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Header from '../components/layout/Header'
 import DealModal from '../components/pipeline/DealModal'
+import LoadingSkeleton from '../styles/LoadingSkeleton'
 import { DollarSign, Plus, TrendingUp, Target } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Pipeline.css'
@@ -173,7 +174,7 @@ export default function Pipeline() {
             <>
                 <Header title="Pipeline" />
                 <div className="page-content">
-                    <div className="loading-state">Loading deals...</div>
+                    <LoadingSkeleton type="pipeline" count={4} />
                 </div>
             </>
         )

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Header from '../components/layout/Header'
 import TaskModal from '../components/tasks/TaskModal'
+import LoadingSkeleton from '../styles/LoadingSkeleton'
 import { Plus, LayoutGrid, List, Filter, X, ChevronDown, Calendar, User, Flag, Clock, Search, Check, MoreHorizontal, FolderOpen } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Tasks.css'
@@ -456,7 +457,7 @@ export default function Tasks() {
             <>
                 <Header title="Tasks" />
                 <div className="page-content">
-                    <div className="loading-state">Loading tasks...</div>
+                    <LoadingSkeleton type="tasks" count={6} />
                 </div>
             </>
         )

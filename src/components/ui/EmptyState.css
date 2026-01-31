@@ -1,0 +1,107 @@
+/* Empty State Styles */
+
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    min-height: 300px;
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+    border: 2px solid var(--border-gold);
+    border-radius: 50%;
+    margin-bottom: var(--spacing-lg);
+    font-size: 2rem;
+    color: var(--gold-primary);
+    animation: empty-state-pulse 2s ease-in-out infinite;
+}
+
+@keyframes empty-state-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.3);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px 5px rgba(212, 175, 55, 0.1);
+    }
+}
+
+.empty-state-icon svg {
+    width: 36px;
+    height: 36px;
+}
+
+.empty-state-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-description {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    max-width: 320px;
+    line-height: 1.5;
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-state-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.empty-state-actions .btn {
+    min-width: 140px;
+}
+
+/* Helpful tips under empty states */
+.empty-state-tips {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    max-width: 400px;
+}
+
+.empty-state-tips h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-tips ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.empty-state-tips li {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: var(--spacing-xs) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.empty-state-tips li::before {
+    content: '💡';
+    font-size: 0.75rem;
+}

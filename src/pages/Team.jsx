@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Header from '../components/layout/Header'
+import LoadingSkeleton from '../styles/LoadingSkeleton'
 import { Trophy, Target, Clock, TrendingUp, UserPlus, X, Check, AlertCircle, Mail, Lock, User, Briefcase, Edit2, Trash2, Save, Image, AtSign } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Team.css'
@@ -266,7 +267,7 @@ export default function Team() {
             <>
                 <Header title="Team" />
                 <div className="page-content">
-                    <div className="loading-state">Loading team...</div>
+                    <LoadingSkeleton type="team" count={3} />
                 </div>
             </>
         )
