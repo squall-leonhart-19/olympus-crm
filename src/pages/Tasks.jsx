@@ -279,7 +279,7 @@ export default function Tasks() {
                         assignees: taskData.assignees || [],
                         project_id: taskData.projectId || null,
                         section_id: taskData.sectionId || null,
-                        due_date: taskData.dueDate,
+                        due_date: taskData.dueDate || null,
                         due_time: taskData.dueTime || null,
                         subtasks: taskData.subtasks || [],
                         labels: taskData.labels || [],
