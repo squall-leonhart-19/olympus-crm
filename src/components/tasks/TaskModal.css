@@ -951,3 +951,132 @@
     background: var(--bg-hover);
     color: var(--text-primary);
 }
+
+/* Enhanced Task View Styles */
+.subtasks-section {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.subtask-progress-bar {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    margin: var(--spacing-sm) 0;
+    overflow: hidden;
+}
+
+.subtask-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-primary), var(--gold-hover));
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.add-subtask-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+}
+
+.subtask-inline-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.subtask-inline-input::placeholder {
+    color: var(--text-muted);
+}
+
+.subtask-inline-input:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+    background: var(--bg-secondary);
+}
+
+.subtask-add-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--gold-primary);
+    border: none;
+    color: #000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.subtask-add-btn:hover {
+    background: var(--gold-hover);
+    transform: scale(1.05);
+}
+
+.no-subtasks {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-sm);
+}
+
+/* Enhanced Meta Grid */
+.task-meta-grid.enhanced {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.status-value,
+.priority-value {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-dot.todo {
+    background: #6b7280;
+}
+
+.status-dot.in_progress {
+    background: #3b82f6;
+}
+
+.status-dot.review {
+    background: #f59e0b;
+}
+
+.status-dot.done {
+    background: #22c55e;
+}
+
+.priority-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.time-card {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.2);
+}
+
+.time-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #8b5cf6;
+}

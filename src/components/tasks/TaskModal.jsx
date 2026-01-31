@@ -300,30 +300,92 @@ export default function TaskModal({
                             </div>
                         )}
 
-                        {/* Subtasks */}
-                        {formData.subtasks?.length > 0 && (
-                            <div className="task-detail-section">
-                                <div className="detail-label">
-                                    <Check size={14} /> Subtasks
+                        {/* Subtasks - Always visible */}
+                        <div className="task-detail-section subtasks-section">
+                            <div className="detail-label">
+                                <Check size={14} /> Subtasks
+                                {formData.subtasks?.length > 0 && (
                                     <span className="subtask-progress">{subtaskProgress}%</span>
-                                </div>
-                                <div className="subtasks-view-list">
-                                    {formData.subtasks.map(st => (
-                                        <div
-                                            key={st.id}
-                                            className={`subtask-view-item ${st.done ? 'done' : ''}`}
-                                            onClick={() => canEdit && toggleSubtask(st.id)}
-                                        >
-                                            <span className="subtask-check">{st.done ? '✓' : '○'}</span>
-                                            <span>{st.text}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                )}
                             </div>
-                        )}
+
+                            {/* Progress bar */}
+                            {formData.subtasks?.length > 0 && (
+                                <div className="subtask-progress-bar">
+                                    <div
+                                        className="subtask-progress-fill"
+                                        style={{ width: `${subtaskProgress}%` }}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="subtasks-view-list">
+                                {formData.subtasks?.map(st => (
+                                    <div
+                                        key={st.id}
+                                        className={`subtask-view-item ${st.done ? 'done' : ''}`}
+                                        onClick={() => canEdit && toggleSubtask(st.id)}
+                                    >
+                                        <span className="subtask-check">{st.done ? '✓' : '○'}</span>
+                                        <span>{st.text}</span>
+                                    </div>
+                                ))}
+
+                                {/* Inline add subtask */}
+                                {canEdit && (
+                                    <div className="add-subtask-inline">
+                                        <input
+                                            type="text"
+                                            placeholder="+ Add subtask..."
+                                            value={newSubtask}
+                                            onChange={(e) => setNewSubtask(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && addSubtask()}
+                                            className="subtask-inline-input"
+                                        />
+                                        {newSubtask && (
+                                            <button
+                                                type="button"
+                                                className="subtask-add-btn"
+                                                onClick={addSubtask}
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {!formData.subtasks?.length && !canEdit && (
+                                    <p className="no-subtasks">No subtasks</p>
+                                )}
+                            </div>
+                        </div>
 
                         {/* Meta Grid */}
-                        <div className="task-meta-grid">
+                        <div className="task-meta-grid enhanced">
+                            {/* Status */}
+                            <div className="task-detail-card status-card">
+                                <div className="detail-label"><Flag size={14} /> Status</div>
+                                <div className="detail-value status-value">
+                                    <span className={`status-dot ${task?.status || 'todo'}`}></span>
+                                    {task?.status === 'todo' && 'To Do'}
+                                    {task?.status === 'in_progress' && 'In Progress'}
+                                    {task?.status === 'review' && 'Review'}
+                                    {task?.status === 'done' && 'Done'}
+                                </div>
+                            </div>
+
+                            {/* Priority */}
+                            <div className="task-detail-card priority-card">
+                                <div className="detail-label"><Flag size={14} /> Priority</div>
+                                <div className="detail-value priority-value">
+                                    <span
+                                        className="priority-indicator"
+                                        style={{ background: selectedPriority?.color }}
+                                    ></span>
+                                    {selectedPriority?.label}
+                                </div>
+                            </div>
+
                             {/* Assignee */}
                             <div className="task-detail-card">
                                 <div className="detail-label"><User size={14} /> Assigned to</div>
@@ -359,6 +421,16 @@ export default function TaskModal({
                                     <div className="detail-value">
                                         {selectedDeal.title}
                                         <span className="deal-value">${selectedDeal.value?.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Time Tracking */}
+                            {task?.timeSpent > 0 && (
+                                <div className="task-detail-card time-card">
+                                    <div className="detail-label"><Timer size={14} /> Time Spent</div>
+                                    <div className="detail-value time-value">
+                                        {Math.floor(task.timeSpent / 60)}h {task.timeSpent % 60}m
                                     </div>
                                 </div>
                             )}
