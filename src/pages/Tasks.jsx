@@ -269,13 +269,16 @@ export default function Tasks() {
             setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskData } : t))
 
             if (isSupabaseConfigured) {
-                await supabase
+                const { error } = await supabase
                     .from('tasks')
                     .update({
                         title: taskData.title,
                         description: taskData.description,
                         priority: taskData.priority,
                         assignee_name: taskData.assignee,
+                        assignees: taskData.assignees || [],
+                        project_id: taskData.projectId || null,
+                        section_id: taskData.sectionId || null,
                         due_date: taskData.dueDate,
                         due_time: taskData.dueTime || null,
                         subtasks: taskData.subtasks || [],
@@ -284,6 +287,7 @@ export default function Tasks() {
                         blocked_by: taskData.blockedBy || [],
                     })
                     .eq('id', editingTask.id)
+                if (error) console.error('Task update error:', error)
             }
         } else {
             const newTask = {
@@ -294,7 +298,7 @@ export default function Tasks() {
             }
 
             if (isSupabaseConfigured) {
-                const { data } = await supabase
+                const { data, error } = await supabase
                     .from('tasks')
                     .insert({
                         title: taskData.title,
@@ -302,6 +306,9 @@ export default function Tasks() {
                         status: newTask.status,
                         priority: taskData.priority,
                         assignee_name: taskData.assignee,
+                        assignees: taskData.assignees || [],
+                        project_id: taskData.projectId || null,
+                        section_id: taskData.sectionId || null,
                         due_date: taskData.dueDate,
                         due_time: taskData.dueTime || null,
                         subtasks: taskData.subtasks || [],
@@ -312,7 +319,9 @@ export default function Tasks() {
                     .select()
                     .single()
 
-                if (data) {
+                if (error) {
+                    console.error('Task insert error:', error)
+                } else if (data) {
                     newTask.id = data.id
                 }
             }
