@@ -9,13 +9,13 @@ const DEFAULT_ICONS = ['📁', '🎓', '💻', '📊', '🚀', '💡', '🎯', '
 export default function Projects() {
     const [projects, setProjects] = useState([])
     const [selectedProject, setSelectedProject] = useState(null)
-    const [sections, setSections] = useState([])
+    const [departments, setDepartments] = useState([])
     const [loading, setLoading] = useState(true)
     const [showNewProject, setShowNewProject] = useState(false)
-    const [showNewSection, setShowNewSection] = useState(false)
+    const [showNewDepartment, setShowNewDepartment] = useState(false)
     const [editingProject, setEditingProject] = useState(null)
     const [newProject, setNewProject] = useState({ name: '', description: '', color: '#d4af37', icon: '📁' })
-    const [newSection, setNewSection] = useState({ name: '', color: '' })
+    const [newDepartment, setNewDepartment] = useState({ name: '', color: '' })
 
     useEffect(() => {
         loadProjects()
@@ -23,7 +23,7 @@ export default function Projects() {
 
     useEffect(() => {
         if (selectedProject) {
-            loadSections(selectedProject.id)
+            loadDepartments(selectedProject.id)
         }
     }, [selectedProject])
 
@@ -47,12 +47,13 @@ export default function Projects() {
         setLoading(false)
     }
 
-    const loadSections = async (projectId) => {
+    const loadDepartments = async (projectId) => {
         if (!isSupabaseConfigured) {
-            setSections([
-                { id: '1', name: 'High Ticket', color: '#f43f5e' },
-                { id: '2', name: 'Software', color: '#8b5cf6' },
-                { id: '3', name: 'Portal', color: '#06b6d4' },
+            setDepartments([
+                { id: '1', name: 'Customer Care', color: '#22c55e' },
+                { id: '2', name: 'Meta Ads', color: '#3b82f6' },
+                { id: '3', name: 'Creatives', color: '#f59e0b' },
+                { id: '4', name: 'Sales', color: '#8b5cf6' },
             ])
             return
         }
@@ -63,7 +64,7 @@ export default function Projects() {
                 .select('*')
                 .eq('project_id', projectId)
                 .order('sort_order', { ascending: true })
-            if (data) setSections(data)
+            if (data) setDepartments(data)
         } catch (e) { console.error(e) }
     }
 
@@ -85,28 +86,28 @@ export default function Projects() {
         setShowNewProject(false)
     }
 
-    const createSection = async () => {
-        if (!newSection.name.trim() || !selectedProject) return
+    const createDepartment = async () => {
+        if (!newDepartment.name.trim() || !selectedProject) return
 
-        const sectionData = {
-            ...newSection,
+        const departmentData = {
+            ...newDepartment,
             project_id: selectedProject.id,
-            sort_order: sections.length
+            sort_order: departments.length
         }
 
         if (isSupabaseConfigured) {
             const { data } = await supabase
                 .from('project_sections')
-                .insert(sectionData)
+                .insert(departmentData)
                 .select()
                 .single()
-            if (data) setSections(prev => [...prev, data])
+            if (data) setDepartments(prev => [...prev, data])
         } else {
-            setSections(prev => [...prev, { ...sectionData, id: Date.now().toString() }])
+            setDepartments(prev => [...prev, { ...departmentData, id: Date.now().toString() }])
         }
 
-        setNewSection({ name: '', color: '' })
-        setShowNewSection(false)
+        setNewDepartment({ name: '', color: '' })
+        setShowNewDepartment(false)
     }
 
     const deleteProject = async (projectId) => {
@@ -119,18 +120,18 @@ export default function Projects() {
         setProjects(prev => prev.filter(p => p.id !== projectId))
         if (selectedProject?.id === projectId) {
             setSelectedProject(null)
-            setSections([])
+            setDepartments([])
         }
     }
 
-    const deleteSection = async (sectionId) => {
-        if (!confirm('Delete this section?')) return
+    const deleteDepartment = async (deptId) => {
+        if (!confirm('Delete this department?')) return
 
         if (isSupabaseConfigured) {
-            await supabase.from('project_sections').delete().eq('id', sectionId)
+            await supabase.from('project_sections').delete().eq('id', deptId)
         }
 
-        setSections(prev => prev.filter(s => s.id !== sectionId))
+        setDepartments(prev => prev.filter(d => d.id !== deptId))
     }
 
     if (loading) {
@@ -205,24 +206,24 @@ export default function Projects() {
 
                         <div className="sections-area">
                             <div className="sections-header">
-                                <h3>Sections</h3>
-                                <button className="add-section-btn" onClick={() => setShowNewSection(true)}>
-                                    <Plus size={16} /> Add Section
+                                <h3>Departments</h3>
+                                <button className="add-section-btn" onClick={() => setShowNewDepartment(true)}>
+                                    <Plus size={16} /> Add Department
                                 </button>
                             </div>
 
                             <div className="sections-grid">
-                                {sections.map(section => (
-                                    <div key={section.id} className="section-card">
+                                {departments.map(dept => (
+                                    <div key={dept.id} className="section-card">
                                         <div
                                             className="section-color-bar"
-                                            style={{ background: section.color || selectedProject.color }}
+                                            style={{ background: dept.color || selectedProject.color }}
                                         />
                                         <div className="section-content">
-                                            <span className="section-name">{section.name}</span>
+                                            <span className="section-name">{dept.name}</span>
                                             <button
                                                 className="section-delete"
-                                                onClick={() => deleteSection(section.id)}
+                                                onClick={() => deleteDepartment(dept.id)}
                                             >
                                                 <X size={14} />
                                             </button>
@@ -230,9 +231,9 @@ export default function Projects() {
                                     </div>
                                 ))}
 
-                                {sections.length === 0 && (
+                                {departments.length === 0 && (
                                     <div className="empty-sections">
-                                        <p>No sections yet. Add sections like "High Ticket", "Portal", etc.</p>
+                                        <p>No departments yet. Add departments like "Customer Care", "Meta Ads", etc.</p>
                                     </div>
                                 )}
                             </div>
@@ -242,7 +243,7 @@ export default function Projects() {
                     <div className="no-project-selected">
                         <FolderOpen size={48} />
                         <h2>Select a Project</h2>
-                        <p>Choose a project from the sidebar to view its sections and tasks</p>
+                        <p>Choose a project from the sidebar to view its departments and tasks</p>
                     </div>
                 )}
             </div>
@@ -313,19 +314,19 @@ export default function Projects() {
                 </div>
             )}
 
-            {/* New Section Modal */}
-            {showNewSection && (
-                <div className="modal-overlay" onClick={() => setShowNewSection(false)}>
+            {/* New Department Modal */}
+            {showNewDepartment && (
+                <div className="modal-overlay" onClick={() => setShowNewDepartment(false)}>
                     <div className="project-modal small" onClick={e => e.stopPropagation()}>
-                        <h2>New Section</h2>
+                        <h2>New Department</h2>
 
                         <div className="form-group">
                             <label>Name</label>
                             <input
                                 type="text"
-                                value={newSection.name}
-                                onChange={e => setNewSection(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder="e.g., High Ticket, Portal..."
+                                value={newDepartment.name}
+                                onChange={e => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="e.g., Customer Care, Meta Ads, Creatives..."
                                 autoFocus
                             />
                         </div>
@@ -337,17 +338,17 @@ export default function Projects() {
                                     <button
                                         key={color}
                                         type="button"
-                                        className={`color-option ${newSection.color === color ? 'active' : ''}`}
+                                        className={`color-option ${newDepartment.color === color ? 'active' : ''}`}
                                         style={{ background: color }}
-                                        onClick={() => setNewSection(prev => ({ ...prev, color }))}
+                                        onClick={() => setNewDepartment(prev => ({ ...prev, color }))}
                                     />
                                 ))}
                             </div>
                         </div>
 
                         <div className="modal-actions">
-                            <button className="cancel-btn" onClick={() => setShowNewSection(false)}>Cancel</button>
-                            <button className="save-btn" onClick={createSection}>Add Section</button>
+                            <button className="cancel-btn" onClick={() => setShowNewDepartment(false)}>Cancel</button>
+                            <button className="save-btn" onClick={createDepartment}>Add Department</button>
                         </div>
                     </div>
                 </div>

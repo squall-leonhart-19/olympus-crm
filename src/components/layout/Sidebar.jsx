@@ -10,11 +10,13 @@ import {
     Zap,
     Calendar,
     FolderOpen,
-    StickyNote
+    StickyNote,
+    Activity
 } from 'lucide-react'
 import './Sidebar.css'
 
 const navItems = [
+    { path: '/ecc', icon: Activity, label: 'Command Center' },
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },

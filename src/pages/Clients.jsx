@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Header from '../components/layout/Header'
-import { Users, UserCheck, AlertTriangle, Star, Plus, UserPlus } from 'lucide-react'
+import { Users, UserCheck, AlertTriangle, Star, Plus, UserPlus, Trash2 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Clients.css'
 
@@ -47,6 +47,19 @@ export default function Clients() {
             console.error('Error loading clients:', e)
         }
         setLoading(false)
+    }
+
+    const deleteClient = async (clientId, clientName) => {
+        if (!confirm(`Delete client "${clientName}"? This cannot be undone.`)) return
+
+        if (isSupabaseConfigured) {
+            try {
+                await supabase.from('clients').delete().eq('id', clientId)
+            } catch (e) {
+                console.error('Error deleting client:', e)
+            }
+        }
+        setClients(prev => prev.filter(c => c.id !== clientId))
     }
 
     const totalClients = clients.length
@@ -120,6 +133,7 @@ export default function Clients() {
                                     <th>Status</th>
                                     <th>Health Score</th>
                                     <th>LTV</th>
+                                    <th style={{ width: '60px' }}></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -162,6 +176,18 @@ export default function Clients() {
                                             </div>
                                         </td>
                                         <td className="ltv-value">${(client.ltv || 0).toLocaleString()}</td>
+                                        <td>
+                                            <button
+                                                className="client-delete-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    deleteClient(client.id, client.name)
+                                                }}
+                                                title="Delete client"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

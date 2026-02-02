@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import Header from '../components/layout/Header'
 import TaskModal from '../components/tasks/TaskModal'
 import LoadingSkeleton from '../styles/LoadingSkeleton'
-import { Plus, LayoutGrid, List, Filter, X, ChevronDown, Calendar, User, Flag, Clock, Search, Check, MoreHorizontal, FolderOpen } from 'lucide-react'
+import { Plus, LayoutGrid, List, Filter, X, ChevronDown, Calendar, User, Flag, Clock, Search, Check, MoreHorizontal, FolderOpen, Target } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import './Tasks.css'
 
@@ -146,7 +147,10 @@ export default function Tasks() {
                     blockedBy: t.blocked_by || [],
                     timeSpent: t.time_spent || 0,
                     createdAt: t.created_at,
-                    completedAt: t.completed_at
+                    completedAt: t.completed_at,
+                    projectId: t.project_id,
+                    sectionId: t.section_id,
+                    source: t.source
                 }))
                 setTasks(mappedTasks)
             }
@@ -298,6 +302,15 @@ export default function Tasks() {
                 createdAt: new Date().toISOString()
             }
 
+            if (newTask.status === 'done') {
+                newTask.completedAt = new Date().toISOString()
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                })
+            }
+
             if (isSupabaseConfigured) {
                 const { data, error } = await supabase
                     .from('tasks')
@@ -316,6 +329,7 @@ export default function Tasks() {
                         labels: taskData.labels || [],
                         recurrence: taskData.recurrence || null,
                         blocked_by: taskData.blockedBy || [],
+                        completed_at: newTask.completedAt || null
                     })
                     .select()
                     .single()
@@ -385,6 +399,14 @@ export default function Tasks() {
             selectedTasks.includes(t.id) ? { ...t, status: newStatus } : t
         ))
 
+        if (newStatus === 'done') {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            })
+        }
+
         if (isSupabaseConfigured) {
             await supabase
                 .from('tasks')
@@ -413,21 +435,25 @@ export default function Tasks() {
     const hasActiveFilters = filters.assignee || filters.priority || filters.status || filters.project || searchQuery
 
     // Filter tasks including search
-    const filteredTasks = tasks.filter(task => {
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase()
-            if (!task.title.toLowerCase().includes(query) &&
-                !(task.description || '').toLowerCase().includes(query) &&
-                !(task.assignee || '').toLowerCase().includes(query)) {
-                return false
+    const getFilteredTasks = () => {
+        return tasks.filter(task => {
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase()
+                if (!task.title.toLowerCase().includes(query) &&
+                    !(task.description || '').toLowerCase().includes(query) &&
+                    !(task.assignee || '').toLowerCase().includes(query)) {
+                    return false
+                }
             }
-        }
-        if (filters.assignee && task.assignee !== filters.assignee) return false
-        if (filters.priority && task.priority !== filters.priority) return false
-        if (filters.status && task.status !== filters.status) return false
-        if (filters.project && task.project_id !== filters.project) return false
-        return true
-    })
+            if (filters.assignee && task.assignee !== filters.assignee) return false
+            if (filters.priority && task.priority !== filters.priority) return false
+            if (filters.status && task.status !== filters.status) return false
+            if (filters.project && task.projectId !== filters.project) return false // Changed from project_id to projectId
+            return true
+        })
+    }
+
+    const filteredTasks = getFilteredTasks() // Keep this for bulk actions and other places that use it
 
     const getTasksByStatus = (status) => filteredTasks.filter(t => t.status === status)
 
@@ -495,6 +521,23 @@ export default function Tasks() {
                             New Task
                         </button>
                         <span className="keyboard-hint">Press N</span>
+
+                        {/* Quick Project Filter */}
+                        {projects.length > 0 && (
+                            <div className="project-quick-filter">
+                                <FolderOpen size={14} />
+                                <select
+                                    value={filters.project}
+                                    onChange={(e) => setFilters(f => ({ ...f, project: e.target.value }))}
+                                    className="project-filter-select"
+                                >
+                                    <option value="">All Projects</option>
+                                    {projects.map(p => (
+                                        <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                     <div className="toolbar-center">
                         <div className="search-box-tasks">
@@ -524,14 +567,23 @@ export default function Tasks() {
                         </button>
                         <div className="view-toggle">
                             <button
+                                className={`toggle-btn ${viewMode === 'today' ? 'active' : ''}`}
+                                onClick={() => setViewMode('today')}
+                                title="Today's Focus"
+                            >
+                                <Target size={18} />
+                            </button>
+                            <button
                                 className={`toggle-btn ${viewMode === 'kanban' ? 'active' : ''}`}
                                 onClick={() => setViewMode('kanban')}
+                                title="Kanban Board"
                             >
                                 <LayoutGrid size={18} />
                             </button>
                             <button
                                 className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                                 onClick={() => setViewMode('list')}
+                                title="List View"
                             >
                                 <List size={18} />
                             </button>
@@ -623,7 +675,7 @@ export default function Tasks() {
                         {viewMode === 'kanban' && (
                             <div className="kanban-board">
                                 {COLUMNS.map(column => {
-                                    const columnTasks = getTasksByStatus(column.id)
+                                    const columnTasks = getFilteredTasks().filter(t => t.status === column.id)
                                     return (
                                         <div
                                             key={column.id}
@@ -730,6 +782,12 @@ export default function Tasks() {
                                                                     {task.subtasks?.length > 0 && (
                                                                         <span className="task-subtask-indicator">
                                                                             ✓ {task.subtasks.filter(s => s.done).length}/{task.subtasks.length}
+                                                                        </span>
+                                                                    )}
+                                                                    {/* Source badge for webhook tasks */}
+                                                                    {task.source && task.source !== 'manual' && (
+                                                                        <span className={`task-source-badge ${task.source}`}>
+                                                                            {task.source}
                                                                         </span>
                                                                     )}
                                                                 </div>

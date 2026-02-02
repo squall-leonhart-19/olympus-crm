@@ -505,7 +505,7 @@ export default function TaskModal({
                         />
                     </div>
 
-                    {/* Project & Section */}
+                    {/* Project & Department */}
                     {projects.length > 0 && (
                         <div className="form-section project-section">
                             <label><span className="project-icon">📁</span> Project</label>
@@ -531,7 +531,7 @@ export default function TaskModal({
                                         value={formData.sectionId || ''}
                                         onChange={(e) => handleChange('sectionId', e.target.value)}
                                     >
-                                        <option value="">No section</option>
+                                        <option value="">No department</option>
                                         {sections.map(s => (
                                             <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}

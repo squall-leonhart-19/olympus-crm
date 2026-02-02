@@ -107,3 +107,29 @@
     font-weight: 600;
     color: var(--gold-primary);
 }
+
+/* Delete Button */
+.client-delete-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.clients-table tbody tr:hover .client-delete-btn {
+    opacity: 1;
+}
+
+.client-delete-btn:hover {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    color: var(--danger);
+}
