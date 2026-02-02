@@ -59,9 +59,17 @@
     gap: 4px;
 }
 
-.ecc-card-trend.up { color: var(--success); }
-.ecc-card-trend.down { color: var(--danger); }
-.ecc-card-trend.neutral { color: var(--text-secondary); }
+.ecc-card-trend.up {
+    color: var(--success);
+}
+
+.ecc-card-trend.down {
+    color: var(--danger);
+}
+
+.ecc-card-trend.neutral {
+    color: var(--text-secondary);
+}
 
 .ecc-pulse-section {
     display: grid;
@@ -95,9 +103,20 @@
 }
 
 @keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
 }
 
 .activity-feed {
@@ -176,6 +195,14 @@
     justify-content: center;
     font-weight: 600;
     font-size: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.member-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .member-info {
