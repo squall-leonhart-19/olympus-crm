@@ -1,27 +1,34 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, Search, LogOut, User, Settings, ChevronDown } from 'lucide-react'
+import { Bell, Search, LogOut, User, Settings, ChevronDown, AlertTriangle, CheckCircle, X, Clock } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import './Header.css'
 
 export default function Header({ title }) {
+    const navigate = useNavigate()
     const { user, logout } = useAuth()
     const [avatarUrl, setAvatarUrl] = useState(null)
     const [showUserMenu, setShowUserMenu] = useState(false)
+    const [showNotifications, setShowNotifications] = useState(false)
+    const [notifications, setNotifications] = useState([])
     const [notificationCount, setNotificationCount] = useState(0)
     const menuRef = useRef(null)
+    const notifRef = useRef(null)
 
     useEffect(() => {
         loadAvatar()
-        checkNotifications()
+        loadNotifications()
     }, [user])
 
-    // Close menu when clicking outside
+    // Close menus when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (menuRef.current && !menuRef.current.contains(e.target)) {
                 setShowUserMenu(false)
+            }
+            if (notifRef.current && !notifRef.current.contains(e.target)) {
+                setShowNotifications(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -44,20 +51,100 @@ export default function Header({ title }) {
         } catch (e) { }
     }
 
-    const checkNotifications = async () => {
-        if (!isSupabaseConfigured) return
+    const loadNotifications = async () => {
+        if (!isSupabaseConfigured) {
+            // Demo notifications
+            setNotifications([
+                { id: 1, type: 'overdue', title: 'Task overdue', message: 'Follow up with TechCorp', time: '2 hours ago' },
+                { id: 2, type: 'reminder', title: 'Due today', message: 'Prepare proposal deck', time: '1 hour ago' },
+                { id: 3, type: 'completed', title: 'Task completed', message: 'Sarah finished onboarding', time: '30 min ago' },
+            ])
+            setNotificationCount(3)
+            return
+        }
 
         try {
-            // Check for overdue tasks
             const today = new Date().toISOString().split('T')[0]
-            const { count } = await supabase
+
+            // Get overdue tasks
+            const { data: overdue } = await supabase
                 .from('tasks')
-                .select('*', { count: 'exact', head: true })
+                .select('id, title, due_date')
                 .lt('due_date', today)
                 .neq('status', 'done')
+                .limit(5)
 
-            setNotificationCount(count || 0)
-        } catch (e) { }
+            // Get tasks due today
+            const { data: dueToday } = await supabase
+                .from('tasks')
+                .select('id, title, due_date')
+                .eq('due_date', today)
+                .neq('status', 'done')
+                .limit(5)
+
+            const notifs = []
+
+            overdue?.forEach(t => {
+                notifs.push({
+                    id: `overdue-${t.id}`,
+                    type: 'overdue',
+                    title: 'Overdue Task',
+                    message: t.title,
+                    time: t.due_date,
+                    taskId: t.id
+                })
+            })
+
+            dueToday?.forEach(t => {
+                notifs.push({
+                    id: `today-${t.id}`,
+                    type: 'reminder',
+                    title: 'Due Today',
+                    message: t.title,
+                    time: 'Today',
+                    taskId: t.id
+                })
+            })
+
+            setNotifications(notifs)
+            setNotificationCount(notifs.length)
+        } catch (e) {
+            console.error('Error loading notifications:', e)
+        }
+    }
+
+    const handleNotificationClick = (notif) => {
+        setShowNotifications(false)
+        navigate('/tasks')
+    }
+
+    const dismissNotification = (e, id) => {
+        e.stopPropagation()
+        setNotifications(prev => prev.filter(n => n.id !== id))
+        setNotificationCount(prev => Math.max(0, prev - 1))
+    }
+
+    const clearAllNotifications = () => {
+        setNotifications([])
+        setNotificationCount(0)
+    }
+
+    const getNotificationIcon = (type) => {
+        switch (type) {
+            case 'overdue': return <AlertTriangle size={16} />
+            case 'completed': return <CheckCircle size={16} />
+            case 'reminder': return <Clock size={16} />
+            default: return <Bell size={16} />
+        }
+    }
+
+    const getNotificationColor = (type) => {
+        switch (type) {
+            case 'overdue': return '#ef4444'
+            case 'completed': return '#22c55e'
+            case 'reminder': return '#f59e0b'
+            default: return '#3b82f6'
+        }
     }
 
     return (
@@ -76,12 +163,72 @@ export default function Header({ title }) {
                     />
                 </div>
 
-                <button className="header-btn notification-btn">
-                    <Bell size={20} />
-                    {notificationCount > 0 && (
-                        <span className="notification-badge">{notificationCount}</span>
+                {/* Notifications */}
+                <div className="notification-container" ref={notifRef}>
+                    <button
+                        className="header-btn notification-btn"
+                        onClick={() => setShowNotifications(!showNotifications)}
+                    >
+                        <Bell size={20} />
+                        {notificationCount > 0 && (
+                            <span className="notification-badge">{notificationCount}</span>
+                        )}
+                    </button>
+
+                    {showNotifications && (
+                        <div className="notification-dropdown">
+                            <div className="notification-header">
+                                <h4>Notifications</h4>
+                                {notifications.length > 0 && (
+                                    <button className="clear-all" onClick={clearAllNotifications}>
+                                        Clear All
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="notification-list">
+                                {notifications.length === 0 ? (
+                                    <div className="notification-empty">
+                                        <Bell size={32} />
+                                        <span>No notifications</span>
+                                    </div>
+                                ) : (
+                                    notifications.map(notif => (
+                                        <div
+                                            key={notif.id}
+                                            className="notification-item"
+                                            onClick={() => handleNotificationClick(notif)}
+                                        >
+                                            <div
+                                                className="notification-icon"
+                                                style={{ background: getNotificationColor(notif.type) }}
+                                            >
+                                                {getNotificationIcon(notif.type)}
+                                            </div>
+                                            <div className="notification-content">
+                                                <span className="notification-title">{notif.title}</span>
+                                                <span className="notification-message">{notif.message}</span>
+                                                <span className="notification-time">{notif.time}</span>
+                                            </div>
+                                            <button
+                                                className="notification-dismiss"
+                                                onClick={(e) => dismissNotification(e, notif.id)}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="notification-footer">
+                                <button onClick={() => { setShowNotifications(false); navigate('/tasks'); }}>
+                                    View All Tasks
+                                </button>
+                            </div>
+                        </div>
                     )}
-                </button>
+                </div>
 
                 <div className="user-menu-container" ref={menuRef}>
                     <button
