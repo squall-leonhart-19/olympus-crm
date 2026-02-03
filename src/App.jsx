@@ -14,6 +14,7 @@ import Projects from './pages/Projects'
 
 import Notes from './pages/Notes'
 import CommandCenter from './pages/CommandCenter'
+import InstallPrompt from './components/pwa/InstallPrompt'
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -72,6 +73,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
+        <InstallPrompt />
       </AuthProvider>
     </BrowserRouter>
   )
